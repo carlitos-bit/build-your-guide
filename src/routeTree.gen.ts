@@ -10,33 +10,143 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBibliotecaRouteImport } from './routes/_authenticated/biblioteca'
+import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
+import { Route as AuthenticatedNovaRedacaoRouteImport } from './routes/_authenticated/nova-redacao'
+import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedRedacoesRouteImport } from './routes/_authenticated/redacoes'
+import { Route as AuthenticatedRedacaoIdRouteImport } from './routes/_authenticated/redacao.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBibliotecaRoute = AuthenticatedBibliotecaRouteImport.update({
+  id: '/biblioteca',
+  path: '/biblioteca',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEventosRoute = AuthenticatedEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedNovaRedacaoRoute =
+  AuthenticatedNovaRedacaoRouteImport.update({
+    id: '/nova-redacao',
+    path: '/nova-redacao',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
+  id: '/painel',
+  path: '/painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRedacoesRoute = AuthenticatedRedacoesRouteImport.update({
+  id: '/redacoes',
+  path: '/redacoes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRedacaoIdRoute = AuthenticatedRedacaoIdRouteImport.update({
+  id: '/redacao/$id',
+  path: '/redacao/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/biblioteca': typeof AuthenticatedBibliotecaRoute
+  '/eventos': typeof AuthenticatedEventosRoute
+  '/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/redacoes': typeof AuthenticatedRedacoesRoute
+  '/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/biblioteca': typeof AuthenticatedBibliotecaRoute
+  '/eventos': typeof AuthenticatedEventosRoute
+  '/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
+  '/painel': typeof AuthenticatedPainelRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/redacoes': typeof AuthenticatedRedacoesRoute
+  '/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/biblioteca': typeof AuthenticatedBibliotecaRoute
+  '/_authenticated/eventos': typeof AuthenticatedEventosRoute
+  '/_authenticated/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
+  '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/redacoes': typeof AuthenticatedRedacoesRoute
+  '/_authenticated/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/biblioteca'
+    | '/eventos'
+    | '/nova-redacao'
+    | '/painel'
+    | '/perfil'
+    | '/redacoes'
+    | '/redacao/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/biblioteca'
+    | '/eventos'
+    | '/nova-redacao'
+    | '/painel'
+    | '/perfil'
+    | '/redacoes'
+    | '/redacao/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/biblioteca'
+    | '/_authenticated/eventos'
+    | '/_authenticated/nova-redacao'
+    | '/_authenticated/painel'
+    | '/_authenticated/perfil'
+    | '/_authenticated/redacoes'
+    | '/_authenticated/redacao/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +158,99 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/biblioteca': {
+      id: '/_authenticated/biblioteca'
+      path: '/biblioteca'
+      fullPath: '/biblioteca'
+      preLoaderRoute: typeof AuthenticatedBibliotecaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/eventos': {
+      id: '/_authenticated/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof AuthenticatedEventosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/nova-redacao': {
+      id: '/_authenticated/nova-redacao'
+      path: '/nova-redacao'
+      fullPath: '/nova-redacao'
+      preLoaderRoute: typeof AuthenticatedNovaRedacaoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/painel': {
+      id: '/_authenticated/painel'
+      path: '/painel'
+      fullPath: '/painel'
+      preLoaderRoute: typeof AuthenticatedPainelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/redacoes': {
+      id: '/_authenticated/redacoes'
+      path: '/redacoes'
+      fullPath: '/redacoes'
+      preLoaderRoute: typeof AuthenticatedRedacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/redacao/$id': {
+      id: '/_authenticated/redacao/$id'
+      path: '/redacao/$id'
+      fullPath: '/redacao/$id'
+      preLoaderRoute: typeof AuthenticatedRedacaoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBibliotecaRoute: typeof AuthenticatedBibliotecaRoute
+  AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
+  AuthenticatedNovaRedacaoRoute: typeof AuthenticatedNovaRedacaoRoute
+  AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedRedacoesRoute: typeof AuthenticatedRedacoesRoute
+  AuthenticatedRedacaoIdRoute: typeof AuthenticatedRedacaoIdRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBibliotecaRoute: AuthenticatedBibliotecaRoute,
+  AuthenticatedEventosRoute: AuthenticatedEventosRoute,
+  AuthenticatedNovaRedacaoRoute: AuthenticatedNovaRedacaoRoute,
+  AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedRedacoesRoute: AuthenticatedRedacoesRoute,
+  AuthenticatedRedacaoIdRoute: AuthenticatedRedacaoIdRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
