@@ -29,7 +29,7 @@ export function AppShell({
 }: {
   children: ReactNode;
   titulo: string;
-  descricao?: string;
+  descricao?: string | undefined;
 }) {
   const { perfil, isProfessor, sair } = useAuth();
   const router = useRouter();
