@@ -12,8 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBibliotecaRouteImport } from './routes/_authenticated/biblioteca'
+import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
 import { Route as AuthenticatedNovaRedacaoRouteImport } from './routes/_authenticated/nova-redacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedRedacoesRouteImport } from './routes/_authenticated/redacoes'
 import { Route as AuthenticatedRedacaoIdRouteImport } from './routes/_authenticated/redacao.$id'
 
@@ -31,6 +34,16 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedBibliotecaRoute = AuthenticatedBibliotecaRouteImport.update({
+  id: '/biblioteca',
+  path: '/biblioteca',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEventosRoute = AuthenticatedEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedNovaRedacaoRoute =
   AuthenticatedNovaRedacaoRouteImport.update({
     id: '/nova-redacao',
@@ -40,6 +53,11 @@ const AuthenticatedNovaRedacaoRoute =
 const AuthenticatedPainelRoute = AuthenticatedPainelRouteImport.update({
   id: '/painel',
   path: '/painel',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRedacoesRoute = AuthenticatedRedacoesRouteImport.update({
@@ -56,16 +74,22 @@ const AuthenticatedRedacaoIdRoute = AuthenticatedRedacaoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/biblioteca': typeof AuthenticatedBibliotecaRoute
+  '/eventos': typeof AuthenticatedEventosRoute
   '/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
   '/redacoes': typeof AuthenticatedRedacoesRoute
   '/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/biblioteca': typeof AuthenticatedBibliotecaRoute
+  '/eventos': typeof AuthenticatedEventosRoute
   '/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
   '/redacoes': typeof AuthenticatedRedacoesRoute
   '/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
@@ -74,24 +98,47 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/biblioteca': typeof AuthenticatedBibliotecaRoute
+  '/_authenticated/eventos': typeof AuthenticatedEventosRoute
   '/_authenticated/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/_authenticated/redacoes': typeof AuthenticatedRedacoesRoute
   '/_authenticated/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/nova-redacao' | '/painel' | '/redacoes' | '/redacao/$id'
+    | '/'
+    | '/auth'
+    | '/biblioteca'
+    | '/eventos'
+    | '/nova-redacao'
+    | '/painel'
+    | '/perfil'
+    | '/redacoes'
+    | '/redacao/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/nova-redacao' | '/painel' | '/redacoes' | '/redacao/$id'
+  to:
+    | '/'
+    | '/auth'
+    | '/biblioteca'
+    | '/eventos'
+    | '/nova-redacao'
+    | '/painel'
+    | '/perfil'
+    | '/redacoes'
+    | '/redacao/$id'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/biblioteca'
+    | '/_authenticated/eventos'
     | '/_authenticated/nova-redacao'
     | '/_authenticated/painel'
+    | '/_authenticated/perfil'
     | '/_authenticated/redacoes'
     | '/_authenticated/redacao/$id'
   fileRoutesById: FileRoutesById
@@ -125,6 +172,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/biblioteca': {
+      id: '/_authenticated/biblioteca'
+      path: '/biblioteca'
+      fullPath: '/biblioteca'
+      preLoaderRoute: typeof AuthenticatedBibliotecaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/eventos': {
+      id: '/_authenticated/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof AuthenticatedEventosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/nova-redacao': {
       id: '/_authenticated/nova-redacao'
       path: '/nova-redacao'
@@ -137,6 +198,13 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/painel'
       preLoaderRoute: typeof AuthenticatedPainelRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/redacoes': {
@@ -157,15 +225,21 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBibliotecaRoute: typeof AuthenticatedBibliotecaRoute
+  AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
   AuthenticatedNovaRedacaoRoute: typeof AuthenticatedNovaRedacaoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedRedacoesRoute: typeof AuthenticatedRedacoesRoute
   AuthenticatedRedacaoIdRoute: typeof AuthenticatedRedacaoIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBibliotecaRoute: AuthenticatedBibliotecaRoute,
+  AuthenticatedEventosRoute: AuthenticatedEventosRoute,
   AuthenticatedNovaRedacaoRoute: AuthenticatedNovaRedacaoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedRedacoesRoute: AuthenticatedRedacoesRoute,
   AuthenticatedRedacaoIdRoute: AuthenticatedRedacaoIdRoute,
 }
