@@ -17,6 +17,7 @@ import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedNovaRedacaoRouteImport } from './routes/_authenticated/nova-redacao'
 import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated/painel'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedProfessorRouteImport } from './routes/_authenticated/professor'
 import { Route as AuthenticatedRedacoesRouteImport } from './routes/_authenticated/redacoes'
 import { Route as AuthenticatedRedacaoIdRouteImport } from './routes/_authenticated/redacao.$id'
 
@@ -60,6 +61,11 @@ const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfessorRoute = AuthenticatedProfessorRouteImport.update({
+  id: '/professor',
+  path: '/professor',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRedacoesRoute = AuthenticatedRedacoesRouteImport.update({
   id: '/redacoes',
   path: '/redacoes',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/professor': typeof AuthenticatedProfessorRoute
   '/redacoes': typeof AuthenticatedRedacoesRoute
   '/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
   '/painel': typeof AuthenticatedPainelRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/professor': typeof AuthenticatedProfessorRoute
   '/redacoes': typeof AuthenticatedRedacoesRoute
   '/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/_authenticated/nova-redacao': typeof AuthenticatedNovaRedacaoRoute
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/professor': typeof AuthenticatedProfessorRoute
   '/_authenticated/redacoes': typeof AuthenticatedRedacoesRoute
   '/_authenticated/redacao/$id': typeof AuthenticatedRedacaoIdRoute
 }
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/nova-redacao'
     | '/painel'
     | '/perfil'
+    | '/professor'
     | '/redacoes'
     | '/redacao/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/nova-redacao'
     | '/painel'
     | '/perfil'
+    | '/professor'
     | '/redacoes'
     | '/redacao/$id'
   id:
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/_authenticated/nova-redacao'
     | '/_authenticated/painel'
     | '/_authenticated/perfil'
+    | '/_authenticated/professor'
     | '/_authenticated/redacoes'
     | '/_authenticated/redacao/$id'
   fileRoutesById: FileRoutesById
@@ -207,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/professor': {
+      id: '/_authenticated/professor'
+      path: '/professor'
+      fullPath: '/professor'
+      preLoaderRoute: typeof AuthenticatedProfessorRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/redacoes': {
       id: '/_authenticated/redacoes'
       path: '/redacoes'
@@ -230,6 +249,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedNovaRedacaoRoute: typeof AuthenticatedNovaRedacaoRoute
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedProfessorRoute: typeof AuthenticatedProfessorRoute
   AuthenticatedRedacoesRoute: typeof AuthenticatedRedacoesRoute
   AuthenticatedRedacaoIdRoute: typeof AuthenticatedRedacaoIdRoute
 }
@@ -240,6 +260,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedNovaRedacaoRoute: AuthenticatedNovaRedacaoRoute,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedProfessorRoute: AuthenticatedProfessorRoute,
   AuthenticatedRedacoesRoute: AuthenticatedRedacoesRoute,
   AuthenticatedRedacaoIdRoute: AuthenticatedRedacaoIdRoute,
 }
