@@ -49,6 +49,19 @@ function Biblioteca() {
     },
   });
 
+  const { data: config } = useQuery({
+    queryKey: ["config-biblioteca"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("configuracoes")
+        .select("valor")
+        .eq("chave", "biblioteca")
+        .maybeSingle();
+      return (data?.valor ?? {}) as { alunos_podem_publicar?: boolean };
+    },
+  });
+  const podePublicar = isProfessor || config?.alunos_podem_publicar !== false;
+
   const publicar = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("biblioteca").insert({
@@ -80,12 +93,14 @@ function Biblioteca() {
             ? "Publique slides e vídeos para suas turmas."
             : "Você também pode compartilhar vídeos com a turma."}
         </p>
+        {podePublicar && (
         <Button size="sm" variant={aberto ? "secondary" : "default"} onClick={() => setAberto(!aberto)}>
           <Plus className="size-4" /> Adicionar material
         </Button>
+        )}
       </div>
 
-      {aberto && (
+      {aberto && podePublicar && (
         <div className="card-soft mb-4 p-5">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">

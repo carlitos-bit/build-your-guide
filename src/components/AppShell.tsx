@@ -7,6 +7,7 @@ import {
   Library,
   LogOut,
   PenLine,
+  ShieldCheck,
   Trophy,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -31,7 +32,7 @@ export function AppShell({
   titulo: string;
   descricao?: string | undefined;
 }) {
-  const { perfil, isProfessor, sair } = useAuth();
+  const { perfil, isProfessor, isAdmin, sair } = useAuth();
   const router = useRouter();
 
   async function handleSair() {
@@ -83,12 +84,26 @@ export function AppShell({
               </Link>
             </>
           )}
+
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              activeProps={{
+                className:
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold bg-sidebar-primary text-sidebar-primary-foreground",
+              }}
+            >
+              <ShieldCheck className="size-4" />
+              Administração
+            </Link>
+          )}
         </nav>
 
         <div className="mt-4 rounded-xl bg-sidebar-accent p-3">
           <p className="truncate text-sm font-semibold">{perfil?.nome ?? "Aluno"}</p>
           <p className="truncate text-xs text-sidebar-foreground/60">
-            {isProfessor ? "Professor" : "Aluno"}
+            {isAdmin ? "Administrador" : isProfessor ? "Professor" : "Aluno"}
           </p>
           <Button
             variant="ghost"
@@ -138,6 +153,18 @@ export function AppShell({
               }}
             >
               Professor
+            </Link>
+          )}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground"
+              activeProps={{
+                className:
+                  "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground",
+              }}
+            >
+              Admin
             </Link>
           )}
         </nav>
