@@ -16,6 +16,7 @@ type AuthContextValue = {
   session: Session | null;
   perfil: PerfilRow | null;
   isProfessor: boolean;
+  isAdmin: boolean;
   loading: boolean;
   sair: () => Promise<void>;
   recarregarPerfil: () => Promise<void>;
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextValue>({
   session: null,
   perfil: null,
   isProfessor: false,
+  isAdmin: false,
   loading: true,
   sair: async () => {},
   recarregarPerfil: async () => {},
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [perfil, setPerfil] = useState<PerfilRow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   async function carregarPerfil(userId: string) {
     const { data } = await supabase
@@ -44,6 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("id", userId)
       .maybeSingle();
     setPerfil((data as PerfilRow | null) ?? null);
+    const { data: papeis } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    setIsAdmin((papeis ?? []).some((p) => (p.role as string) === "admin"));
   }
 
   useEffect(() => {
@@ -54,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void carregarPerfil(novaSessao.user.id);
       } else {
         setPerfil(null);
+        setIsAdmin(false);
       }
       setLoading(false);
     });
@@ -74,7 +83,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     session,
     perfil,
-    isProfessor: perfil?.perfil === "professor",
+    isProfessor: perfil?.perfil === "professor" || isAdmin,
+    isAdmin,
     loading,
     sair: async () => {
       await supabase.auth.signOut();
