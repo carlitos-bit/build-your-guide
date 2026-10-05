@@ -24,7 +24,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { corDaNota, rotuloDaNota } from "@/lib/notas";
+import { COMPETENCIAS, corDaNota, rotuloDaNota } from "@/lib/notas";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/painel")({
   head: () => ({
@@ -54,7 +55,7 @@ function Painel() {
       const [redacoes, gam, trofeus, eventos] = await Promise.all([
         supabase
           .from("redacoes")
-          .select("id, tema_titulo, created_at, tipo, correcoes(nota_total, liberada)")
+          .select("id, tema_titulo, created_at, tipo, correcoes(nota_total, nota_c1, nota_c2, nota_c3, nota_c4, nota_c5, liberada)")
           .eq("aluno_id", user!.id)
           .order("created_at", { ascending: true }),
         supabase
@@ -82,14 +83,23 @@ function Painel() {
   const corrigidas = (data?.redacoes ?? [])
     .map((r) => {
       const c = Array.isArray(r.correcoes) ? r.correcoes[0] : r.correcoes;
-      return { ...r, nota: c?.liberada ? (c.nota_total as number) : null };
+      return {
+        ...r,
+        nota: c?.liberada ? (c.nota_total as number) : null,
+        comps: c?.liberada
+          ? [c.nota_c1, c.nota_c2, c.nota_c3, c.nota_c4, c.nota_c5].map(Number)
+          : [],
+      };
     })
     .filter((r) => r.nota !== null) as Array<{
     id: string;
     tema_titulo: string;
     created_at: string;
+    tipo: string;
     nota: number;
+    comps: number[];
   }>;
+  const historico = [...corrigidas].reverse();
 
   const ultima = corrigidas.at(-1);
   const media = corrigidas.length
@@ -244,6 +254,78 @@ function Painel() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-4 card-soft p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-base font-semibold">Histórico de redações</h2>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/redacoes">Ver todas</Link>
+          </Button>
+        </div>
+        {historico.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">Nenhuma redação corrigida ainda.</p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                  <th className="py-2 font-semibold">Data</th>
+                  <th className="py-2 font-semibold">Tema</th>
+                  {COMPETENCIAS.map((c) => (
+                    <th key={c.chave} className="py-2 text-center font-semibold">
+                      {c.chave.toUpperCase()}
+                    </th>
+                  ))}
+                  <th className="py-2 text-right font-semibold">Nota</th>
+                </tr>
+              </thead>
+              <tbody>
+                {historico.map((r, i) => {
+                  const anterior = historico[i + 1];
+                  const delta = anterior ? r.nota - anterior.nota : null;
+                  return (
+                    <tr key={r.id} className="border-b border-border/60 last:border-0">
+                      <td className="py-3 whitespace-nowrap text-muted-foreground">
+                        {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="max-w-[240px] py-3">
+                        <Link
+                          to="/redacao/$id"
+                          params={{ id: r.id }}
+                          className="line-clamp-1 font-medium hover:text-primary"
+                        >
+                          {r.tema_titulo}
+                        </Link>
+                        {r.tipo === "cronometrada" && (
+                          <Badge variant="outline" className="mt-1 text-[10px]">
+                            Cronometrada
+                          </Badge>
+                        )}
+                      </td>
+                      {r.comps.map((n, j) => (
+                        <td key={j} className={`py-3 text-center font-semibold ${corDaNota(n * 5)}`}>
+                          {n}
+                        </td>
+                      ))}
+                      <td className="py-3 text-right">
+                        <span className={`nota-grande text-lg ${corDaNota(r.nota)}`}>{r.nota}</span>
+                        {delta !== null && delta !== 0 && (
+                          <span
+                            className={`ml-2 text-xs font-semibold ${delta > 0 ? "text-success" : "text-danger"}`}
+                          >
+                            {delta > 0 ? "+" : ""}
+                            {delta}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </AppShell>
   );

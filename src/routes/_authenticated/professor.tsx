@@ -66,7 +66,7 @@ function PainelProfessor() {
             "id, redacao_id, nota_c1, nota_c2, nota_c3, nota_c4, nota_c5, nota_total, feedback_professor, liberada, redacoes(tema_titulo, aluno_id, created_at)",
           )
           .order("created_at", { ascending: false }),
-        supabase.from("profiles").select("id, nome").eq("perfil", "aluno"),
+        supabase.from("profiles").select("id, nome"),
       ]);
       return {
         correcoes: (correcoes.data ?? []) as unknown as CorrecaoRow[],
@@ -119,6 +119,25 @@ function PainelProfessor() {
     const media = valores.length ? Math.round(valores.reduce((a, b) => a + b, 0) / valores.length) : 0;
     return { ...c, media };
   });
+  const porAluno = new Map<string, { data: string; nota: number }[]>();
+  for (const c of correcoes) {
+    const id = c.redacoes?.aluno_id;
+    if (!id) continue;
+    const lista = porAluno.get(id) ?? [];
+    lista.push({ data: c.redacoes?.created_at ?? "", nota: c.nota_total });
+    porAluno.set(id, lista);
+  }
+  const progresso = [...porAluno.entries()].map(([id, lista]) => {
+    const ord = [...lista].sort((a, b) => a.data.localeCompare(b.data));
+    return {
+      id,
+      nome: data?.alunos.get(id) ?? "Usuário",
+      total: ord.length,
+      primeira: ord[0]?.nota ?? 0,
+      ultima: ord.at(-1)?.nota ?? 0,
+      media: Math.round(ord.reduce((a, b) => a + b.nota, 0) / ord.length),
+    };
+  });
   const maisFraca = [...mediaPorComp].sort((a, b) => a.media - b.media)[0];
 
   return (
@@ -164,6 +183,48 @@ function PainelProfessor() {
               <p className="mt-1 nota-grande text-xl">{c.media}</p>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="mt-4 card-soft p-5">
+        <h2 className="font-display text-base font-semibold">Progresso dos alunos</h2>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-xs uppercase text-muted-foreground">
+                <th className="py-2">Aluno</th>
+                <th className="py-2 text-right">Redações</th>
+                <th className="py-2 text-right">Primeira</th>
+                <th className="py-2 text-right">Última</th>
+                <th className="py-2 text-right">Média</th>
+                <th className="py-2 text-right">Evolução</th>
+              </tr>
+            </thead>
+            <tbody>
+              {progresso.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-4 text-center text-muted-foreground">
+                    Nenhum aluno enviou redações ainda.
+                  </td>
+                </tr>
+              )}
+              {progresso.map((p) => (
+                <tr key={p.id} className="border-b border-border/60 last:border-0">
+                  <td className="py-3 font-medium">{p.nome}</td>
+                  <td className="py-3 text-right">{p.total}</td>
+                  <td className="py-3 text-right">{p.primeira}</td>
+                  <td className={`py-3 text-right font-semibold ${corDaNota(p.ultima)}`}>{p.ultima}</td>
+                  <td className="py-3 text-right">{p.media}</td>
+                  <td
+                    className={`py-3 text-right font-semibold ${p.ultima - p.primeira >= 0 ? "text-success" : "text-danger"}`}
+                  >
+                    {p.ultima - p.primeira >= 0 ? "+" : ""}
+                    {p.ultima - p.primeira}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
