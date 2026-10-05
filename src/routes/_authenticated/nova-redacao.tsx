@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Clock, Loader2, PenLine, Sparkles, Timer } from "lucide-react";
+import { Clock, Loader2, Pause, PenLine, Play, Sparkles, Timer, X } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { enviarRedacao } from "@/lib/redacoes.functions";
 import { AppShell } from "@/components/AppShell";
@@ -43,6 +44,7 @@ function NovaRedacao() {
   const [rodando, setRodando] = useState(false);
   const [restante, setRestante] = useState(DURACAO_SIMULADO);
   const [enviando, setEnviando] = useState(false);
+  const [focoAtivo, setFocoAtivo] = useState(false);
   const inicioRef = useRef<number | null>(null);
 
   const { data: temas } = useQuery({
@@ -84,6 +86,7 @@ function NovaRedacao() {
     inicioRef.current = Date.now();
     setRestante(DURACAO_SIMULADO);
     setRodando(true);
+    setFocoAtivo(true);
   }
 
   async function handleEnviar() {
@@ -124,6 +127,108 @@ function NovaRedacao() {
 
   const minutos = String(Math.floor(restante / 60)).padStart(2, "0");
   const segundos = String(restante % 60).padStart(2, "0");
+
+  const linhasEstimadas = Math.ceil(texto.length / 75);
+  const pctTempo = Math.round(((DURACAO_SIMULADO - restante) / DURACAO_SIMULADO) * 100);
+  const corTempo =
+    restante <= 600 ? "text-danger" : restante <= 1800 ? "text-trofeu" : "text-ink-foreground";
+  const fase =
+    pctTempo < 20
+      ? "Planejamento: leia o tema e monte o rascunho"
+      : pctTempo < 75
+        ? "Escrita: desenvolva introdução, argumentos e conclusão"
+        : "Revisão: confira a proposta de intervenção e a gramática";
+
+  if (tipo === "cronometrada" && focoAtivo) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-30 bg-hero text-ink-foreground shadow-lg">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-5 py-4">
+            <div className="min-w-0">
+              <p className="text-xs uppercase tracking-wider text-ink-foreground/60">
+                Simulado ENEM • 90 minutos
+              </p>
+              <p className="truncate font-display text-base font-semibold">{temaTitulo}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Clock className={`size-5 ${corTempo}`} />
+                <span className={`nota-grande text-4xl tabular-nums ${corTempo}`} aria-live="polite">
+                  {minutos}:{segundos}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setRodando(!rodando)}
+                disabled={restante === 0}
+              >
+                {rodando ? <Pause className="size-4" /> : <Play className="size-4" />}
+                {rodando ? "Pausar" : "Retomar"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-ink-foreground hover:bg-ink-foreground/10"
+                onClick={() => {
+                  setRodando(false);
+                  setFocoAtivo(false);
+                }}
+                aria-label="Sair do modo foco"
+              >
+                <X className="size-4" />
+              </Button>
+            </div>
+          </div>
+          <div className="mx-auto max-w-5xl px-5 pb-4">
+            <Progress value={pctTempo} className="h-1.5" />
+            <p className="mt-2 text-xs text-ink-foreground/70">{fase}</p>
+          </div>
+        </header>
+
+        <main className="mx-auto max-w-5xl px-5 py-6">
+          {!rodando && restante > 0 && (
+            <div className="mb-4 rounded-xl border border-border bg-muted p-3 text-center text-sm">
+              Cronômetro pausado. Clique em Retomar para continuar.
+            </div>
+          )}
+          {restante === 0 && (
+            <div className="mb-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-center text-sm font-semibold">
+              Tempo esgotado! Envie sua redação para correção.
+            </div>
+          )}
+          <div className="card-soft p-6">
+            <Textarea
+              id="redacao"
+              value={texto}
+              onChange={(e) => setTexto(e.target.value)}
+              placeholder="Comece sua dissertação-argumentativa aqui..."
+              className="min-h-[60vh] resize-y border-0 text-base leading-loose shadow-none focus-visible:ring-0"
+              autoFocus
+            />
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <div className="flex gap-4 text-xs text-muted-foreground">
+                <span>{palavras} palavras</span>
+                <span>~{linhasEstimadas} linhas</span>
+                <span className={linhasEstimadas > 30 ? "text-danger" : ""}>Limite: 30 linhas</span>
+              </div>
+              <Button onClick={handleEnviar} disabled={enviando}>
+                {enviando ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" /> Corrigindo...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-4" /> Finalizar e enviar
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <AppShell titulo="Nova redação" descricao="Escolha o tema e o modo de escrita">
@@ -175,9 +280,11 @@ function NovaRedacao() {
                 <Button
                   size="sm"
                   variant={rodando ? "secondary" : "default"}
-                  onClick={() => (rodando ? setRodando(false) : iniciarCronometro())}
+                  onClick={() =>
+                    inicioRef.current ? (setFocoAtivo(true), setRodando(true)) : iniciarCronometro()
+                  }
                 >
-                  {rodando ? "Pausar" : "Iniciar"}
+                  {inicioRef.current ? "Voltar ao simulado" : "Iniciar simulado"}
                 </Button>
               </div>
             )}
