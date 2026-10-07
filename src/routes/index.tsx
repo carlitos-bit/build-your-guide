@@ -10,6 +10,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AccountMenu } from "@/components/AccountMenu";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,6 +22,8 @@ export const Route = createFileRoute("/")({
           "Envie sua redação e receba nota de 0 a 1000 pelas 5 competências do ENEM, com feedback trecho por trecho, revisão do professor e gamificação.",
       },
       { property: "og:title", content: "EscreveAI — Escreva. Evolua. Conquiste. Resgate." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content:
@@ -76,9 +79,7 @@ function Home() {
           </span>
           <span className="font-display text-lg font-semibold">EscreveAI</span>
         </div>
-        <Button asChild size="sm">
-          <Link to="/auth">Entrar</Link>
-        </Button>
+        <AccountMenu />
       </header>
 
       <section className="bg-hero px-5 py-20 text-ink-foreground">
