@@ -8,7 +8,7 @@ export function StudentAvatar({ value, className, portrait = false }: { value?: 
   const outfit = `avatar-outfit-${a.outfitColor}`;
   const width = a.body === 1 ? 42 : a.body === 2 ? 29 : 35;
   return (
-    <svg viewBox={portrait ? "34 8 112 112" : "0 0 180 260"} className={cn("shrink-0", className)} role="img" aria-label="Avatar personnalisé">
+    <svg viewBox={portrait ? "34 8 112 112" : "0 0 180 260"} className={cn("shrink-0", className)} role="img" aria-label="Avatar personalizado">
       {!portrait && <ellipse cx="90" cy="247" rx="49" ry="5" className="fill-foreground/10" />}
       <path d="M66 184h22v48H65zm26 0h22l1 48H93z" className="fill-avatar-denim" />
       {a.shoes === 1 ? <path d="M64 219h24v23H54q0-12 10-12zm29 0h23v11q12 0 12 12H93z" className="fill-avatar-hair-0" /> : <path d="M64 231h24v12H52q-1-10 12-12zm29 0h23q14 3 14 12H93z" className={a.shoes === 0 ? "fill-primary-foreground stroke-foreground" : "fill-avatar-hair-1"} strokeWidth="2" />}
