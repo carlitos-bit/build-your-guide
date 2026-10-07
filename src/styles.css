@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+@source inline("{fill,bg}-avatar-{skin,hair,outfit}-{0,1,2,3}");
 
 @custom-variant dark (&:is(.dark *));
 
@@ -11,6 +12,20 @@
  */
 
 @theme inline {
+  --color-avatar-skin-0: var(--avatar-skin-0);
+  --color-avatar-skin-1: var(--avatar-skin-1);
+  --color-avatar-skin-2: var(--avatar-skin-2);
+  --color-avatar-skin-3: var(--avatar-skin-3);
+  --color-avatar-hair-0: var(--avatar-hair-0);
+  --color-avatar-hair-1: var(--avatar-hair-1);
+  --color-avatar-hair-2: var(--avatar-hair-2);
+  --color-avatar-hair-3: var(--avatar-hair-3);
+  --color-avatar-outfit-0: var(--primary);
+  --color-avatar-outfit-1: var(--cash);
+  --color-avatar-outfit-2: var(--danger);
+  --color-avatar-outfit-3: var(--avatar-denim);
+  --color-avatar-denim: var(--avatar-denim);
+  --color-avatar-ink: var(--avatar-ink);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -72,6 +87,16 @@
 }
 
 :root {
+  --avatar-skin-0: oklch(0.89 0.06 58);
+  --avatar-skin-1: oklch(0.77 0.1 56);
+  --avatar-skin-2: oklch(0.61 0.09 49);
+  --avatar-skin-3: oklch(0.43 0.065 44);
+  --avatar-hair-0: oklch(0.25 0.02 40);
+  --avatar-hair-1: oklch(0.39 0.065 48);
+  --avatar-hair-2: oklch(0.79 0.12 86);
+  --avatar-hair-3: oklch(0.55 0.14 42);
+  --avatar-denim: oklch(0.51 0.12 247);
+  --avatar-ink: oklch(0.23 0.025 40);
   --radius: 0.875rem;
 
   --background: oklch(0.98 0.005 285);

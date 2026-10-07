@@ -1,0 +1,2 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar jsonb NOT NULL DEFAULT '{}'::jsonb;
+COMMENT ON COLUMN public.profiles.avatar IS 'User-customized illustrated avatar options; existing profile RLS protects updates.';

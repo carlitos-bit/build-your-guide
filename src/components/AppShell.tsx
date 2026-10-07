@@ -13,6 +13,8 @@ import {
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { AccountMenu } from "@/components/AccountMenu";
+import { StudentAvatar } from "@/components/StudentAvatar";
 
 const itensAluno = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
@@ -101,6 +103,7 @@ export function AppShell({
         </nav>
 
         <div className="mt-4 rounded-xl bg-sidebar-accent p-3">
+          <StudentAvatar value={perfil?.avatar} portrait className="mb-2 size-11 rounded-full bg-secondary" />
           <p className="truncate text-sm font-semibold">{perfil?.nome ?? "Aluno"}</p>
           <p className="truncate text-xs text-sidebar-foreground/60">
             {isAdmin ? "Administrador" : isProfessor ? "Professor" : "Aluno"}
@@ -122,11 +125,12 @@ export function AppShell({
             <h1 className="font-display text-xl font-semibold">{titulo}</h1>
             {descricao && <p className="text-sm text-muted-foreground">{descricao}</p>}
           </div>
-          <Button asChild size="sm">
+          <div className="flex items-center gap-2"><Button asChild size="sm">
             <Link to="/nova-redacao">
               <PenLine className="size-4" /> Escrever
             </Link>
           </Button>
+          <AccountMenu /></div>
         </header>
 
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 lg:hidden">

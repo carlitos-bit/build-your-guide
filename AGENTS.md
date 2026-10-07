@@ -9,3 +9,4 @@
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
 - Admin role lives in user_roles ('admin'); role changes go through the admin_definir_papel DB function, never client-side checks — prevents privilege escalation.
+- Store avatar option indices in profiles.avatar and normalize against a shared catalog; render the same layered SVG in the editor and account menu to keep identity consistent without image uploads.

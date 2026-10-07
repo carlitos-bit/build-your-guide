@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { AvatarEditor } from "@/components/AvatarEditor";
+import { StudentAvatar } from "@/components/StudentAvatar";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
@@ -16,6 +18,8 @@ export const Route = createFileRoute("/_authenticated/perfil")({
         content: "Nível, XP, CASH, troféus, sequência e média: o cartão de visitas do seu desempenho.",
       },
       { property: "og:title", content: "Meu perfil — EscreveAI" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content: "Acompanhe sua progressão com CASH, XP e troféus no EscreveAI.",
@@ -32,18 +36,19 @@ function PerfilAluno() {
     queryKey: ["perfil-gamificacao", user?.id],
     enabled: !!user,
     queryFn: async () => {
+      if (!user) throw new Error("Sessão não encontrada");
       const [gam, trofeus, meus, correcoes] = await Promise.all([
         supabase
           .from("perfil_gamificacao")
           .select("nivel, xp_atual, cash_atual, sequencia_quinzenas")
-          .eq("aluno_id", user!.id)
+          .eq("aluno_id", user.id)
           .maybeSingle(),
         supabase.from("trofeus").select("codigo, nome, descricao"),
-        supabase.from("trofeus_aluno").select("trofeu_codigo").eq("aluno_id", user!.id),
+        supabase.from("trofeus_aluno").select("trofeu_codigo").eq("aluno_id", user.id),
         supabase
           .from("correcoes")
           .select("nota_total, redacoes!inner(aluno_id)")
-          .eq("redacoes.aluno_id", user!.id),
+          .eq("redacoes.aluno_id", user.id),
       ]);
       const notas = (correcoes.data ?? []).map((c) => c.nota_total as number);
       return {
@@ -63,6 +68,7 @@ function PerfilAluno() {
   return (
     <AppShell titulo="Meu perfil" descricao="Sua progressão dentro do EscreveAI">
       <div className="card-soft bg-hero p-6 text-ink-foreground">
+        <StudentAvatar value={perfil?.avatar} portrait className="mb-4 size-20 rounded-full bg-secondary" />
         <p className="font-display text-2xl font-bold uppercase tracking-wide">
           {perfil?.nome ?? "Aluno"}
         </p>
@@ -98,6 +104,8 @@ function PerfilAluno() {
           </div>
         </div>
       </div>
+
+      <AvatarEditor />
 
       <div className="mt-4 card-soft p-6">
         <h2 className="font-display text-base font-semibold">Troféus</h2>
