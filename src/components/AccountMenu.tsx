@@ -14,7 +14,7 @@ export function AccountMenu() {
   return <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button variant="ghost" className="h-12 gap-2 px-2" aria-label="Menu da minha conta">
-        <StudentAvatar value={perfil?.avatar} portrait className="size-9 rounded-full bg-secondary" />
+        <StudentAvatar value={perfil?.avatar} portrait className="size-9! rounded-full bg-secondary" />
         <span className="hidden max-w-36 truncate sm:block">{perfil?.nome || "Minha conta"}</span>
         <ChevronDown className="size-4 text-muted-foreground" />
       </Button>

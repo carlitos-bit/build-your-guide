@@ -48,7 +48,7 @@ export function AvatarEditor() {
         </Tabs>
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3" role="group" aria-label={categories.find(c => c.key === category)?.label}>
           {avatarOptions[category].map((label, index) => <Button key={label} variant="outline" aria-label={label} aria-pressed={draft[category] === index} disabled={saving} className={`relative flex h-36 flex-col gap-1 rounded-lg ${draft[category] === index ? "border-primary bg-primary/5 ring-1 ring-primary" : ""}`} onClick={() => setDraft(d => ({ ...d, [category]: index }))}>
-            <StudentAvatar value={{ ...draft, [category]: index }} portrait={category !== "body" && category !== "clothes" && category !== "shoes"} className="h-24 w-20" />
+            <StudentAvatar value={{ ...draft, [category]: index }} portrait={category !== "body" && category !== "clothes" && category !== "shoes"} className="h-24! w-20!" />
             <span className="text-xs">{label}</span>{draft[category] === index && <Check className="absolute right-2 top-2 size-4 text-primary" />}
           </Button>)}
         </div>
