@@ -8,8 +8,9 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { enviarRedacao } from "@/lib/redacoes.functions";
 import { AppShell } from "@/components/AppShell";
+import { EditorRedacao, limparRascunho } from "@/components/EditorRedacao";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -36,7 +37,9 @@ const DURACAO_SIMULADO = 90 * 60;
 
 function NovaRedacao() {
   const router = useRouter();
+  const { user } = useAuth();
   const enviar = useServerFn(enviarRedacao);
+  const rascunhoBase = `nova-redacao:${user?.id ?? "anon"}`;
   const [tipo, setTipo] = useState<"livre" | "cronometrada">("livre");
   const [temaId, setTemaId] = useState<string | null>(null);
   const [temaLivre, setTemaLivre] = useState("");
@@ -76,7 +79,6 @@ function NovaRedacao() {
 
   const temaSelecionado = temas?.find((t) => t.id === temaId);
   const temaTitulo = temaSelecionado?.titulo ?? temaLivre;
-  const palavras = texto.trim() ? texto.trim().split(/\s+/).length : 0;
 
   function iniciarCronometro() {
     if (!temaTitulo) {
@@ -115,6 +117,8 @@ function NovaRedacao() {
       toast.success(
         `Nota ${resultado.notaTotal}/1000 • +${resultado.cashGanho} CASH • +${resultado.xpGanho} XP`,
       );
+      limparRascunho(rascunhoBase);
+      setTexto("");
       void router.navigate({ to: "/redacao/$id", params: { id: resultado.redacaoId } });
     } catch (error) {
       toast.error(
@@ -128,7 +132,6 @@ function NovaRedacao() {
   const minutos = String(Math.floor(restante / 60)).padStart(2, "0");
   const segundos = String(restante % 60).padStart(2, "0");
 
-  const linhasEstimadas = Math.ceil(texto.length / 75);
   const pctTempo = Math.round(((DURACAO_SIMULADO - restante) / DURACAO_SIMULADO) * 100);
   const corTempo =
     restante <= 600 ? "text-danger" : restante <= 1800 ? "text-trofeu" : "text-ink-foreground";
@@ -198,20 +201,17 @@ function NovaRedacao() {
             </div>
           )}
           <div className="card-soft p-6">
-            <Textarea
+            <EditorRedacao
               id="redacao"
               value={texto}
-              onChange={(e) => setTexto(e.target.value)}
+              onChange={setTexto}
+              rascunhoBase={rascunhoBase}
               placeholder="Comece sua dissertação-argumentativa aqui..."
               className="min-h-[60vh] resize-y border-0 text-base leading-loose shadow-none focus-visible:ring-0"
               autoFocus
+              maxLinhas={30}
             />
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-              <div className="flex gap-4 text-xs text-muted-foreground">
-                <span>{palavras} palavras</span>
-                <span>~{linhasEstimadas} linhas</span>
-                <span className={linhasEstimadas > 30 ? "text-danger" : ""}>Limite: 30 linhas</span>
-              </div>
+            <div className="mt-4 flex justify-end border-t border-border pt-4">
               <Button onClick={handleEnviar} disabled={enviando}>
                 {enviando ? (
                   <>
@@ -294,16 +294,16 @@ function NovaRedacao() {
             <Label htmlFor="redacao" className="text-sm font-semibold">
               Sua redação
             </Label>
-            <Textarea
-              id="redacao"
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              placeholder="Escreva aqui sua dissertação-argumentativa..."
-              className="mt-3 min-h-[420px] resize-y leading-relaxed"
-            />
-            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-              <span>{palavras} palavras • {texto.length} caracteres</span>
-              <span>Ideal: 25 a 30 linhas</span>
+            <div className="mt-3">
+              <EditorRedacao
+                id="redacao"
+                value={texto}
+                onChange={setTexto}
+                rascunhoBase={rascunhoBase}
+                placeholder="Escreva aqui sua dissertação-argumentativa..."
+                className="min-h-[420px] resize-y leading-relaxed"
+                maxLinhas={30}
+              />
             </div>
             <Button className="mt-4 w-full" onClick={handleEnviar} disabled={enviando}>
               {enviando ? (

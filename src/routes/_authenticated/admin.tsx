@@ -141,12 +141,18 @@ function Admin() {
     alunos_podem_publicar: data?.config.alunos_podem_publicar ?? true,
     moderacao_previa: data?.config.moderacao_previa ?? false,
   };
-  const totalAlunos = (data?.perfis ?? []).filter((p) => p.perfil === "aluno").length;
+  const pendentes = (data?.perfis ?? []).filter((p) => p.perfil === "professor_pendente").length;
+  const totalAlunos = (data?.perfis ?? []).filter(
+    (p) => p.perfil !== "professor" && p.perfil !== "professor_pendente",
+  ).length;
   const totalProf = (data?.perfis ?? []).filter((p) => p.perfil === "professor").length;
 
   const stats = [
     { label: "Alunos", valor: totalAlunos, icon: Users },
     { label: "Professores", valor: totalProf, icon: GraduationCap },
+    ...(pendentes > 0
+      ? [{ label: "Pedidos de professor", valor: pendentes, icon: ShieldCheck }]
+      : []),
     { label: "Redações enviadas", valor: data?.redacoes.length ?? 0, icon: ShieldCheck },
     { label: "Materiais na biblioteca", valor: data?.biblioteca.length ?? 0, icon: BookOpen },
   ];
@@ -200,9 +206,15 @@ function Admin() {
                         <p className="text-xs text-muted-foreground">{u.email}</p>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={u.perfil === "professor" ? "default" : "secondary"}>
-                          {u.perfil === "professor" ? "Professor" : "Aluno"}
-                        </Badge>
+                        {u.perfil === "professor" ? (
+                          <Badge variant="default">Professor</Badge>
+                        ) : u.perfil === "professor_pendente" ? (
+                          <Badge variant="outline" className="border-warning text-warning">
+                            Professor (pendente)
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Aluno</Badge>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">{u.total}</TableCell>
                       <TableCell className="text-right">{u.media ?? "—"}</TableCell>

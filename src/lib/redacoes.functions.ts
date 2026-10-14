@@ -59,44 +59,85 @@ export const enviarRedacao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => EnviarInput.parse(input))
   .handler(async ({ data, context }) => {
-    const key = process.env["LOVABLE_API_KEY"];
-    if (!key) throw new Error("A correção por IA não está configurada.");
+    const geminiKey = process.env["GEMINI_API_KEY"];
+    const lovableKey = process.env["LOVABLE_API_KEY"];
+    if (!geminiKey && !lovableKey) {
+      throw new Error("A correção por IA não está configurada.");
+    }
 
-    const { createLovableAiGatewayRunIdFetch } = await import("./ai-gateway.server");
-    const { createOpenAI } = await import("@ai-sdk/openai");
     const { streamText, Output, NoObjectGeneratedError } = await import("ai");
 
-    const runIdFetch = createLovableAiGatewayRunIdFetch();
-    const lovable = createOpenAI({
-      baseURL: "https://ai.gateway.lovable.dev/v1",
-      apiKey: key,
-      headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-      fetch: runIdFetch.fetch,
-    });
+    const prompt = `TEMA PROPOSTO: ${data.temaTitulo}\n\nMODALIDADE: ${
+      data.tipo === "cronometrada" ? "simulado cronometrado" : "treino livre"
+    }\n\nREDAÇÃO DO ALUNO:\n${data.texto}`;
 
-    let correcao: z.infer<typeof correcaoSchema>;
-    try {
-      const result = streamText({
-        model: lovable.responses("openai/gpt-6-astra"),
-        system: PROMPT_SISTEMA,
-        output: Output.object({ schema: correcaoSchema }),
-        prompt: `TEMA PROPOSTO: ${data.temaTitulo}\n\nMODALIDADE: ${
-          data.tipo === "cronometrada" ? "simulado cronometrado" : "treino livre"
-        }\n\nREDAÇÃO DO ALUNO:\n${data.texto}`,
-        providerOptions: {
-          openai: {
-            forceReasoning: true,
-            reasoningEffort: "low",
-            store: false,
-          },
-        },
-      });
-      correcao = (await result.output) as z.infer<typeof correcaoSchema>;
-    } catch (error) {
-      if (NoObjectGeneratedError.isInstance(error)) {
+    let correcao: z.infer<typeof correcaoSchema> | undefined;
+
+    // Provedor principal: Google Gemini. Basta configurar GEMINI_API_KEY (plano gratuito).
+    // Usa o endpoint compatível com OpenAI, então não precisamos de dependências extras.
+    if (geminiKey) {
+      try {
+        const { createOpenAICompatible } = await import("@ai-sdk/openai-compatible");
+        const gemini = createOpenAICompatible({
+          name: "gemini",
+          baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+          apiKey: geminiKey,
+        });
+        const resultado = streamText({
+          model: gemini(process.env["GEMINI_MODEL"] ?? "gemini-2.5-pro"),
+          system: PROMPT_SISTEMA,
+          output: Output.object({ schema: correcaoSchema }),
+          prompt,
+        });
+        correcao = (await resultado.output) as z.infer<typeof correcaoSchema>;
+      } catch (error) {
+        console.error("[correcao] Gemini indisponível, usando fallback:", error);
+        correcao = undefined;
+      }
+    }
+
+    // Fallback: AI Gateway da Lovable (usa os créditos do workspace).
+    if (!correcao) {
+      if (!lovableKey) {
         throw new Error("Não conseguimos corrigir esta redação agora. Tente novamente.");
       }
-      throw error;
+
+      const { createLovableAiGatewayRunIdFetch } = await import("./ai-gateway.server");
+      const { createOpenAI } = await import("@ai-sdk/openai");
+
+      const runIdFetch = createLovableAiGatewayRunIdFetch();
+      const lovable = createOpenAI({
+        baseURL: "https://ai.gateway.lovable.dev/v1",
+        apiKey: lovableKey,
+        headers: { "Lovable-API-Key": lovableKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+        fetch: runIdFetch.fetch,
+      });
+
+      try {
+        const resultado = streamText({
+          model: lovable.responses(process.env["LOVABLE_MODEL"] ?? "openai/gpt-6-astra"),
+          system: PROMPT_SISTEMA,
+          output: Output.object({ schema: correcaoSchema }),
+          prompt,
+          providerOptions: {
+            openai: {
+              forceReasoning: true,
+              reasoningEffort: "low",
+              store: false,
+            },
+          },
+        });
+        correcao = (await resultado.output) as z.infer<typeof correcaoSchema>;
+      } catch (error) {
+        if (NoObjectGeneratedError.isInstance(error)) {
+          throw new Error("Não conseguimos corrigir esta redação agora. Tente novamente.");
+        }
+        throw error;
+      }
+    }
+
+    if (!correcao) {
+      throw new Error("Não conseguimos corrigir esta redação agora. Tente novamente.");
     }
 
     const notas = {
@@ -120,35 +161,37 @@ export const enviarRedacao = createServerFn({ method: "POST" })
         texto: data.texto,
         tipo: data.tipo,
         tempo_gasto_seg: data.tempoGastoSeg,
-        status: "corrigida",
+        status: "em_revisao",
       })
       .select("id")
       .single();
 
     if (erroRedacao || !redacao) throw new Error("Não foi possível salvar a redação.");
 
-    const { error: erroCorrecao } = await supabase.from("correcoes").insert({
-      redacao_id: redacao.id,
-      nota_c1: notas.c1,
-      nota_c2: notas.c2,
-      nota_c3: notas.c3,
-      nota_c4: notas.c4,
-      nota_c5: notas.c5,
-      nota_total: notaTotal,
-      feedback_ia: {
-        resumo: correcao.resumo,
-        competencias: {
-          c1: { ...correcao.c1, nota: notas.c1 },
-          c2: { ...correcao.c2, nota: notas.c2 },
-          c3: { ...correcao.c3, nota: notas.c3 },
-          c4: { ...correcao.c4, nota: notas.c4 },
-          c5: { ...correcao.c5, nota: notas.c5 },
-        },
-        pontos_fortes: correcao.pontos_fortes,
-        pontos_a_melhorar: correcao.pontos_a_melhorar,
-        trechos: correcao.trechos,
+    // A correção da IA é registrada por função controlada e nasce como ESTIMATIVA
+    // (liberada = false). Só o professor a torna oficial.
+    const feedbackIa = {
+      resumo: correcao.resumo,
+      competencias: {
+        c1: { ...correcao.c1, nota: notas.c1 },
+        c2: { ...correcao.c2, nota: notas.c2 },
+        c3: { ...correcao.c3, nota: notas.c3 },
+        c4: { ...correcao.c4, nota: notas.c4 },
+        c5: { ...correcao.c5, nota: notas.c5 },
       },
-      liberada: true,
+      pontos_fortes: correcao.pontos_fortes,
+      pontos_a_melhorar: correcao.pontos_a_melhorar,
+      trechos: correcao.trechos,
+    };
+
+    const { error: erroCorrecao } = await supabase.rpc("registrar_correcao_ia", {
+      _redacao_id: redacao.id,
+      _c1: notas.c1,
+      _c2: notas.c2,
+      _c3: notas.c3,
+      _c4: notas.c4,
+      _c5: notas.c5,
+      _feedback: feedbackIa,
     });
 
     if (erroCorrecao) throw new Error("Não foi possível salvar a correção.");
@@ -235,14 +278,15 @@ export const ajustarCorrecao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => AjustarInput.parse(input))
   .handler(async ({ data, context }) => {
-    const { data: papel } = await context.supabase
+    const { data: papeis } = await context.supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
-      .eq("role", "professor")
-      .maybeSingle();
+      .in("role", ["professor", "admin"]);
 
-    if (!papel) throw new Error("Apenas professores podem revisar correções.");
+    if (!papeis || papeis.length === 0) {
+      throw new Error("Apenas professores ou administradores podem revisar correções.");
+    }
 
     const notas = {
       c1: arredondar40(data.notas.c1),
@@ -252,7 +296,7 @@ export const ajustarCorrecao = createServerFn({ method: "POST" })
       c5: arredondar40(data.notas.c5),
     };
 
-    const { error } = await context.supabase
+    const { data: atualizada, error } = await context.supabase
       .from("correcoes")
       .update({
         nota_c1: notas.c1,
@@ -264,9 +308,146 @@ export const ajustarCorrecao = createServerFn({ method: "POST" })
         feedback_professor: data.feedbackProfessor,
         liberada: data.liberada,
         revisada_por: context.userId,
+        revisada_em: new Date().toISOString(),
       })
-      .eq("id", data.correcaoId);
+      .eq("id", data.correcaoId)
+      .select("redacao_id")
+      .single();
 
     if (error) throw new Error("Não foi possível salvar a revisão.");
+
+    // A redação só vira "corrigida" (oficial) quando a correção é liberada.
+    if (atualizada?.redacao_id) {
+      await context.supabase
+        .from("redacoes")
+        .update({ status: data.liberada ? "corrigida" : "em_revisao" })
+        .eq("id", atualizada.redacao_id);
+    }
+
+    return { ok: true };
+  });
+
+// ===== ANOTAÇÕES DO PROFESSOR =====
+
+const AnotacaoInput = z.object({
+  correcaoId: z.string().uuid(),
+  inicio: z.number().int().nonnegative(),
+  fim: z.number().int().nonnegative(),
+  trechoSelecionado: z.string().min(1),
+  tipo: z.enum(["highlight", "footnote"]),
+  cor: z.enum(["amarelo", "verde", "azul", "rosa", "laranja"]).optional(),
+  comentario: z.string().optional(),
+  ordem: z.number().int().nonnegative().default(0),
+});
+
+export const criarAnotacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => AnotacaoInput.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: papeis } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["professor", "admin"]);
+
+    if (!papeis || papeis.length === 0) {
+      throw new Error("Apenas professores ou administradores podem criar anotações.");
+    }
+
+    const { data: anotacao, error } = await context.supabase
+      .from("anotacoes_correcao")
+      .insert({
+        correcao_id: data.correcaoId,
+        professor_id: context.userId,
+        inicio: data.inicio,
+        fim: data.fim,
+        trecho_selecionado: data.trechoSelecionado,
+        tipo: data.tipo,
+        cor: data.cor ?? "amarelo",
+        comentario: data.comentario ?? null,
+        ordem: data.ordem,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error("Não foi possível criar a anotação.");
+    return anotacao;
+  });
+
+export const listarAnotacoes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ correcaoId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: anotacoes, error } = await context.supabase
+      .from("anotacoes_correcao")
+      .select("*")
+      .eq("correcao_id", data.correcaoId)
+      .order("inicio", { ascending: true })
+      .order("ordem", { ascending: true });
+
+    if (error) throw new Error("Não foi possível carregar as anotações.");
+    return anotacoes ?? [];
+  });
+
+export const atualizarAnotacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      id: z.string().uuid(),
+      inicio: z.number().int().nonnegative().optional(),
+      fim: z.number().int().nonnegative().optional(),
+      trechoSelecionado: z.string().optional(),
+      tipo: z.enum(["highlight", "footnote"]).optional(),
+      cor: z.enum(["amarelo", "verde", "azul", "rosa", "laranja"]).optional(),
+      comentario: z.string().nullable().optional(),
+      ordem: z.number().int().nonnegative().optional(),
+    }).parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const { id, ...updates } = data;
+    const { data: anotacao, error } = await context.supabase
+      .from("anotacoes_correcao")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("professor_id", context.userId)
+      .select()
+      .single();
+
+    if (error) throw new Error("Não foi possível atualizar a anotação.");
+    return anotacao;
+  });
+
+export const excluirAnotacao = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("anotacoes_correcao")
+      .delete()
+      .eq("id", data.id)
+      .eq("professor_id", context.userId);
+
+    if (error) throw new Error("Não foi possível excluir a anotação.");
+    return { ok: true };
+  });
+
+// Reordena footnotes (útil quando o professor move/insere no meio)
+export const reordenarFootnotes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      correcaoId: z.string().uuid(),
+      idsEmOrdem: z.array(z.string().uuid()),
+    }).parse(input)
+  )
+  .handler(async ({ data, context }) => {
+    const updates = data.idsEmOrdem.map((id, idx) =>
+      context.supabase
+        .from("anotacoes_correcao")
+        .update({ ordem: idx, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .eq("professor_id", context.userId)
+    );
+    await Promise.all(updates);
     return { ok: true };
   });

@@ -76,10 +76,10 @@ function PainelProfessor() {
   });
 
   const mutation = useMutation({
-    mutationFn: async (correcaoId: string) =>
+    mutationFn: async (args: { correcaoId: string; liberada: boolean }) =>
       salvar({
         data: {
-          correcaoId,
+          correcaoId: args.correcaoId,
           notas: {
             c1: notas["c1"] ?? 0,
             c2: notas["c2"] ?? 0,
@@ -88,11 +88,15 @@ function PainelProfessor() {
             c5: notas["c5"] ?? 0,
           },
           feedbackProfessor: comentario || null,
-          liberada: true,
+          liberada: args.liberada,
         },
       }),
-    onSuccess: () => {
-      toast.success("Correção revisada e liberada ao aluno.");
+    onSuccess: (_r, args) => {
+      toast.success(
+        args.liberada
+          ? "Correção revisada e liberada ao aluno."
+          : "Correção salva (ainda em revisão).",
+      );
       setEditando(null);
       void queryClient.invalidateQueries({ queryKey: ["professor-correcoes"] });
     },
@@ -113,14 +117,17 @@ function PainelProfessor() {
   }
 
   const correcoes = data?.correcoes ?? [];
+  const pendentes = correcoes.filter((c) => !c.liberada);
+  const revisadas = correcoes.filter((c) => c.liberada);
+
   const mediaPorComp = COMPETENCIAS.map((c) => {
     const chave = `nota_${c.chave}` as keyof CorrecaoRow;
-    const valores = correcoes.map((r) => Number(r[chave] ?? 0));
+    const valores = revisadas.map((r) => Number(r[chave] ?? 0));
     const media = valores.length ? Math.round(valores.reduce((a, b) => a + b, 0) / valores.length) : 0;
     return { ...c, media };
   });
   const porAluno = new Map<string, { data: string; nota: number }[]>();
-  for (const c of correcoes) {
+  for (const c of revisadas) {
     const id = c.redacoes?.aluno_id;
     if (!id) continue;
     const lista = porAluno.get(id) ?? [];
@@ -140,22 +147,123 @@ function PainelProfessor() {
   });
   const maisFraca = [...mediaPorComp].sort((a, b) => a.media - b.media)[0];
 
+  function cardCorrecao(c: CorrecaoRow) {
+    return (
+      <div key={c.id} className="card-soft p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate font-semibold">{c.redacoes?.tema_titulo}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {data?.alunos.get(c.redacoes?.aluno_id ?? "") ?? "Aluno"} •{" "}
+              {c.redacoes?.created_at
+                ? new Date(c.redacoes.created_at).toLocaleDateString("pt-BR")
+                : ""}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge variant={c.liberada ? "secondary" : "outline"}>
+              {c.liberada ? "Liberada" : "Em revisão"}
+            </Badge>
+            <span className={`nota-grande text-2xl ${corDaNota(c.nota_total)}`}>
+              {c.nota_total}
+            </span>
+          </div>
+        </div>
+
+        {editando === c.id ? (
+          <div className="mt-4 space-y-3">
+            <div className="grid gap-3 sm:grid-cols-5">
+              {COMPETENCIAS.map((comp) => (
+                <div key={comp.chave}>
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">
+                    {comp.chave}
+                  </label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={200}
+                    step={40}
+                    value={notas[comp.chave] ?? 0}
+                    onChange={(e) => setNotas({ ...notas, [comp.chave]: Number(e.target.value) })}
+                  />
+                </div>
+              ))}
+            </div>
+            <Textarea
+              value={comentario}
+              onChange={(e) => setComentario(e.target.value)}
+              placeholder="Comentário do professor para o aluno..."
+            />
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() => mutation.mutate({ correcaoId: c.id, liberada: true })}
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending && <Loader2 className="size-4 animate-spin" />} Salvar e
+                liberar
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => mutation.mutate({ correcaoId: c.id, liberada: false })}
+                disabled={mutation.isPending}
+              >
+                Salvar sem liberar
+              </Button>
+              <Button variant="ghost" onClick={() => setEditando(null)}>
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap gap-2 text-xs">
+              {COMPETENCIAS.map((comp) => (
+                <Badge key={comp.chave} variant="outline">
+                  {comp.chave.toUpperCase()}:{" "}
+                  {Number(c[`nota_${comp.chave}` as keyof CorrecaoRow] ?? 0)}
+                </Badge>
+              ))}
+            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => {
+                setEditando(c.id);
+                setNotas({
+                  c1: c.nota_c1,
+                  c2: c.nota_c2,
+                  c3: c.nota_c3,
+                  c4: c.nota_c4,
+                  c5: c.nota_c5,
+                });
+                setComentario(c.feedback_professor ?? "");
+              }}
+            >
+              Revisar e ajustar
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <AppShell titulo="Painel do professor" descricao="Revise a IA antes de liberar ao aluno">
       <div className="grid gap-4 md:grid-cols-3">
         <div className="card-soft p-5">
           <Users className="size-4 text-primary" />
-          <p className="mt-2 nota-grande text-2xl">{correcoes.length}</p>
-          <p className="text-sm text-muted-foreground">Redações corrigidas</p>
+          <p className="mt-2 nota-grande text-2xl">{pendentes.length}</p>
+          <p className="text-sm text-muted-foreground">Aguardando sua revisão</p>
+          <p className="mt-1 text-xs text-muted-foreground">{revisadas.length} já revisada(s)</p>
         </div>
         <div className="card-soft p-5">
-          <p className="text-sm text-muted-foreground">Média geral da turma</p>
+          <p className="text-sm text-muted-foreground">Média oficial da turma</p>
           <p className="mt-1 nota-grande text-2xl text-primary">
-            {correcoes.length
-              ? Math.round(correcoes.reduce((a, b) => a + b.nota_total, 0) / correcoes.length)
+            {revisadas.length
+              ? Math.round(revisadas.reduce((a, b) => a + b.nota_total, 0) / revisadas.length)
               : 0}
           </p>
-          <p className="text-xs text-muted-foreground">/ 1000</p>
+          <p className="text-xs text-muted-foreground">/ 1000 (só notas revisadas)</p>
         </div>
         <div className="card-soft p-5">
           <Flame className="size-4 text-danger" />
@@ -228,100 +336,22 @@ function PainelProfessor() {
         </div>
       </div>
 
-      <h2 className="mt-6 font-display text-base font-semibold">Correções para revisar</h2>
+      <h2 className="mt-6 font-display text-base font-semibold">
+        Aguardando sua revisão ({pendentes.length})
+      </h2>
       {isLoading && <p className="mt-2 text-sm text-muted-foreground">Carregando...</p>}
+      {!isLoading && pendentes.length === 0 && (
+        <p className="mt-2 text-sm text-muted-foreground">Nenhuma correção pendente.</p>
+      )}
+      <div className="mt-3 space-y-3">{pendentes.map((c) => cardCorrecao(c))}</div>
 
-      <div className="mt-3 space-y-3">
-        {correcoes.map((c) => (
-          <div key={c.id} className="card-soft p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold">{c.redacoes?.tema_titulo}</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {data?.alunos.get(c.redacoes?.aluno_id ?? "") ?? "Aluno"} •{" "}
-                  {c.redacoes?.created_at
-                    ? new Date(c.redacoes.created_at).toLocaleDateString("pt-BR")
-                    : ""}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge variant={c.liberada ? "secondary" : "outline"}>
-                  {c.liberada ? "Liberada" : "Em revisão"}
-                </Badge>
-                <span className={`nota-grande text-2xl ${corDaNota(c.nota_total)}`}>
-                  {c.nota_total}
-                </span>
-              </div>
-            </div>
-
-            {editando === c.id ? (
-              <div className="mt-4 space-y-3">
-                <div className="grid gap-3 sm:grid-cols-5">
-                  {COMPETENCIAS.map((comp) => (
-                    <div key={comp.chave}>
-                      <label className="text-xs font-semibold uppercase text-muted-foreground">
-                        {comp.chave}
-                      </label>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={200}
-                        step={40}
-                        value={notas[comp.chave] ?? 0}
-                        onChange={(e) =>
-                          setNotas({ ...notas, [comp.chave]: Number(e.target.value) })
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-                <Textarea
-                  value={comentario}
-                  onChange={(e) => setComentario(e.target.value)}
-                  placeholder="Comentário do professor para o aluno..."
-                />
-                <div className="flex gap-2">
-                  <Button onClick={() => mutation.mutate(c.id)} disabled={mutation.isPending}>
-                    {mutation.isPending && <Loader2 className="size-4 animate-spin" />} Salvar e
-                    liberar
-                  </Button>
-                  <Button variant="ghost" onClick={() => setEditando(null)}>
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <div className="flex flex-wrap gap-2 text-xs">
-                  {COMPETENCIAS.map((comp) => (
-                    <Badge key={comp.chave} variant="outline">
-                      {comp.chave.toUpperCase()}:{" "}
-                      {Number(c[`nota_${comp.chave}` as keyof CorrecaoRow] ?? 0)}
-                    </Badge>
-                  ))}
-                </div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    setEditando(c.id);
-                    setNotas({
-                      c1: c.nota_c1,
-                      c2: c.nota_c2,
-                      c3: c.nota_c3,
-                      c4: c.nota_c4,
-                      c5: c.nota_c5,
-                    });
-                    setComentario(c.feedback_professor ?? "");
-                  }}
-                >
-                  Revisar e ajustar
-                </Button>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+      <h2 className="mt-6 font-display text-base font-semibold">
+        Já revisadas ({revisadas.length})
+      </h2>
+      {revisadas.length === 0 && (
+        <p className="mt-2 text-sm text-muted-foreground">Nenhuma correção revisada ainda.</p>
+      )}
+      <div className="mt-3 space-y-3">{revisadas.map((c) => cardCorrecao(c))}</div>
     </AppShell>
   );
 }

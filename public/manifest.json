@@ -1,0 +1,23 @@
+{
+  "name": "EscreveAI",
+  "short_name": "EscreveAI",
+  "description": "Correção de redações do ENEM com inteligência artificial, painel do professor e gamificação.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

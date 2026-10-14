@@ -77,8 +77,16 @@ function Resultado() {
 
       {correcao && (
         <div className="space-y-4">
+          {!correcao.liberada && (
+            <div className="card-soft border-warning/50 bg-warning/5 p-4 text-sm">
+              <span className="font-semibold">Correção em revisão.</span> Esta é a estimativa da
+              IA. A nota oficial só é definida depois que o professor revisa e libera.
+            </div>
+          )}
           <div className="card-soft bg-hero p-6 text-ink-foreground">
-            <p className="text-sm text-ink-foreground/70">Nota final estimada</p>
+            <p className="text-sm text-ink-foreground/70">
+              {correcao.liberada ? "Nota oficial" : "Estimativa da IA (em revisão)"}
+            </p>
             <div className="mt-1 flex flex-wrap items-end gap-3">
               <span className="nota-grande text-6xl">{correcao.nota_total}</span>
               <span className="pb-2 text-sm text-ink-foreground/70">/ 1000</span>
@@ -192,7 +200,9 @@ function Resultado() {
           </div>
 
           <p className={`text-center text-xs ${corDaNota(correcao.nota_total as number)}`}>
-            Nota estimada pela IA do EscreveAI e revisável pelo professor.
+            {correcao.liberada
+              ? "Nota revisada e liberada pelo professor."
+              : "Estimativa da IA do EscreveAI — aguardando revisão do professor."}
           </p>
         </div>
       )}

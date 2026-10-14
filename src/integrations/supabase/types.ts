@@ -83,6 +83,7 @@ export type Database = {
           nota_total: number
           redacao_id: string
           revisada_por: string | null
+          revisada_em: string | null
         }
         Insert: {
           created_at?: string
@@ -98,6 +99,7 @@ export type Database = {
           nota_total?: number
           redacao_id: string
           revisada_por?: string | null
+          revisada_em?: string | null
         }
         Update: {
           created_at?: string
@@ -113,6 +115,7 @@ export type Database = {
           nota_total?: number
           redacao_id?: string
           revisada_por?: string | null
+          revisada_em?: string | null
         }
         Relationships: [
           {
@@ -397,6 +400,18 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      registrar_correcao_ia: {
+        Args: {
+          _redacao_id: string
+          _c1: number
+          _c2: number
+          _c3: number
+          _c4: number
+          _c5: number
+          _feedback: Json
+        }
+        Returns: undefined
       }
     }
     Enums: {

@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [perfil, setPerfil] = useState<PerfilRow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [papeis, setPapeis] = useState<string[]>([]);
 
   async function carregarPerfil(userId: string) {
     const { data } = await supabase
@@ -48,11 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .eq("id", userId)
       .maybeSingle();
     setPerfil((data as PerfilRow | null) ?? null);
-    const { data: papeis } = await supabase
+    const { data: papeisData } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId);
-    setIsAdmin((papeis ?? []).some((p) => (p.role as string) === "admin"));
+    setPapeis((papeisData ?? []).map((p) => p.role as string));
   }
 
   useEffect(() => {
@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void carregarPerfil(novaSessao.user.id);
       } else {
         setPerfil(null);
-        setIsAdmin(false);
+        setPapeis([]);
       }
       setLoading(false);
     });
@@ -84,13 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     session,
     perfil,
-    isProfessor: perfil?.perfil === "professor" || isAdmin,
-    isAdmin,
+    isProfessor: papeis.includes("professor") || perfil?.perfil === "professor",
+    isAdmin: papeis.includes("admin"),
     loading,
     sair: async () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setPerfil(null);
+      setPapeis([]);
     },
     recarregarPerfil: async () => {
       if (user) await carregarPerfil(user.id);

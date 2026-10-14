@@ -101,6 +101,11 @@ function Painel() {
   }>;
   const historico = [...corrigidas].reverse();
 
+  const emRevisao = (data?.redacoes ?? []).filter((r) => {
+    const c = Array.isArray(r.correcoes) ? r.correcoes[0] : r.correcoes;
+    return c && !c.liberada;
+  }).length;
+
   const ultima = corrigidas.at(-1);
   const media = corrigidas.length
     ? Math.round(corrigidas.reduce((a, b) => a + b.nota, 0) / corrigidas.length)
@@ -144,13 +149,23 @@ function Painel() {
             </>
           ) : (
             <div className="mt-2">
-              <p className="font-display text-2xl font-semibold">Nenhuma redação ainda</p>
+              <p className="font-display text-2xl font-semibold">
+                {emRevisao > 0 ? "Correção em revisão" : "Nenhuma redação ainda"}
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Envie sua primeira redação e receba a correção pelas 5 competências.
+                {emRevisao > 0
+                  ? `Você tem ${emRevisao} redação(ões) com estimativa da IA aguardando a revisão do professor.`
+                  : "Envie sua primeira redação e receba a correção pelas 5 competências."}
               </p>
               <Button asChild className="mt-4">
-                <Link to="/nova-redacao">
-                  <Sparkles className="size-4" /> Escrever agora
+                <Link to={emRevisao > 0 ? "/redacoes" : "/nova-redacao"}>
+                  {emRevisao > 0 ? (
+                    "Ver minhas redações"
+                  ) : (
+                    <>
+                      <Sparkles className="size-4" /> Escrever agora
+                    </>
+                  )}
                 </Link>
               </Button>
             </div>
