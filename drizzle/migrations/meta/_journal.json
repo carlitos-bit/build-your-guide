@@ -8,6 +8,20 @@
       "when": 1791393544238,
       "tag": "0000_profile_avatar_customization",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793811865719,
+      "tag": "0001_add_correcao_ia_function_and_revision_timestamp",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793812039559,
+      "tag": "0002_correcoes_update_admin",
+      "breakpoints": true
     }
   ]
 }
