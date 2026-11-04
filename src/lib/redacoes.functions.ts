@@ -184,7 +184,7 @@ export const enviarRedacao = createServerFn({ method: "POST" })
       trechos: correcao.trechos,
     };
 
-    const { error: erroCorrecao } = await supabase.rpc("registrar_correcao_ia" as never, {
+    const { error: erroCorrecao } = await supabase.rpc("registrar_correcao_ia", {
       _redacao_id: redacao.id,
       _c1: notas.c1,
       _c2: notas.c2,
@@ -192,7 +192,7 @@ export const enviarRedacao = createServerFn({ method: "POST" })
       _c4: notas.c4,
       _c5: notas.c5,
       _feedback: feedbackIa,
-    } as never);
+    });
 
     if (erroCorrecao) throw new Error("Não foi possível salvar a correção.");
 
@@ -309,7 +309,7 @@ export const ajustarCorrecao = createServerFn({ method: "POST" })
         liberada: data.liberada,
         revisada_por: context.userId,
         revisada_em: new Date().toISOString(),
-      } as never)
+      })
       .eq("id", data.correcaoId)
       .select("redacao_id")
       .single();
