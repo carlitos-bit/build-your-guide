@@ -309,7 +309,7 @@ export const ajustarCorrecao = createServerFn({ method: "POST" })
         liberada: data.liberada,
         revisada_por: context.userId,
         revisada_em: new Date().toISOString(),
-      })
+      } as never)
       .eq("id", data.correcaoId)
       .select("redacao_id")
       .single();
