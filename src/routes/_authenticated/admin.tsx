@@ -266,18 +266,6 @@ function Admin() {
                 onCheckedChange={(v) => salvarConfig.mutate({ ...config, alunos_podem_publicar: v })}
               />
             </div>
-            <div className="flex items-center justify-between gap-4 pt-4">
-              <div>
-                <p className="font-semibold">Moderação prévia</p>
-                <p className="text-sm text-muted-foreground">
-                  Sinaliza que novos materiais devem ser revisados pela coordenação.
-                </p>
-              </div>
-              <Switch
-                checked={config.moderacao_previa}
-                onCheckedChange={(v) => salvarConfig.mutate({ ...config, moderacao_previa: v })}
-              />
-            </div>
           </div>
 
           <div className="card-soft p-5">
