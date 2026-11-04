@@ -184,7 +184,7 @@ export const enviarRedacao = createServerFn({ method: "POST" })
       trechos: correcao.trechos,
     };
 
-    const { error: erroCorrecao } = await supabase.rpc("registrar_correcao_ia", {
+    const { error: erroCorrecao } = await supabase.rpc("registrar_correcao_ia" as never, {
       _redacao_id: redacao.id,
       _c1: notas.c1,
       _c2: notas.c2,
@@ -192,7 +192,7 @@ export const enviarRedacao = createServerFn({ method: "POST" })
       _c4: notas.c4,
       _c5: notas.c5,
       _feedback: feedbackIa,
-    });
+    } as never);
 
     if (erroCorrecao) throw new Error("Não foi possível salvar a correção.");
 
@@ -327,127 +327,7 @@ export const ajustarCorrecao = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-// ===== ANOTAÇÕES DO PROFESSOR =====
+// As anotações do professor (destaques e notas de rodapé sobre o texto) ainda
+// não têm tabela no banco nem tela que as use. Para reativar a função, crie a
+// tabela `anotacoes_correcao` com RLS e volte a expor estes server functions.
 
-const AnotacaoInput = z.object({
-  correcaoId: z.string().uuid(),
-  inicio: z.number().int().nonnegative(),
-  fim: z.number().int().nonnegative(),
-  trechoSelecionado: z.string().min(1),
-  tipo: z.enum(["highlight", "footnote"]),
-  cor: z.enum(["amarelo", "verde", "azul", "rosa", "laranja"]).optional(),
-  comentario: z.string().optional(),
-  ordem: z.number().int().nonnegative().default(0),
-});
-
-export const criarAnotacao = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => AnotacaoInput.parse(input))
-  .handler(async ({ data, context }) => {
-    const { data: papeis } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .in("role", ["professor", "admin"]);
-
-    if (!papeis || papeis.length === 0) {
-      throw new Error("Apenas professores ou administradores podem criar anotações.");
-    }
-
-    const { data: anotacao, error } = await context.supabase
-      .from("anotacoes_correcao")
-      .insert({
-        correcao_id: data.correcaoId,
-        professor_id: context.userId,
-        inicio: data.inicio,
-        fim: data.fim,
-        trecho_selecionado: data.trechoSelecionado,
-        tipo: data.tipo,
-        cor: data.cor ?? "amarelo",
-        comentario: data.comentario ?? null,
-        ordem: data.ordem,
-      })
-      .select()
-      .single();
-
-    if (error) throw new Error("Não foi possível criar a anotação.");
-    return anotacao;
-  });
-
-export const listarAnotacoes = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ correcaoId: z.string().uuid() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { data: anotacoes, error } = await context.supabase
-      .from("anotacoes_correcao")
-      .select("*")
-      .eq("correcao_id", data.correcaoId)
-      .order("inicio", { ascending: true })
-      .order("ordem", { ascending: true });
-
-    if (error) throw new Error("Não foi possível carregar as anotações.");
-    return anotacoes ?? [];
-  });
-
-export const atualizarAnotacao = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({
-      id: z.string().uuid(),
-      inicio: z.number().int().nonnegative().optional(),
-      fim: z.number().int().nonnegative().optional(),
-      trechoSelecionado: z.string().optional(),
-      tipo: z.enum(["highlight", "footnote"]).optional(),
-      cor: z.enum(["amarelo", "verde", "azul", "rosa", "laranja"]).optional(),
-      comentario: z.string().nullable().optional(),
-      ordem: z.number().int().nonnegative().optional(),
-    }).parse(input)
-  )
-  .handler(async ({ data, context }) => {
-    const { id, ...updates } = data;
-    const { data: anotacao, error } = await context.supabase
-      .from("anotacoes_correcao")
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq("id", id)
-      .eq("professor_id", context.userId)
-      .select()
-      .single();
-
-    if (error) throw new Error("Não foi possível atualizar a anotação.");
-    return anotacao;
-  });
-
-export const excluirAnotacao = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
-  .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("anotacoes_correcao")
-      .delete()
-      .eq("id", data.id)
-      .eq("professor_id", context.userId);
-
-    if (error) throw new Error("Não foi possível excluir a anotação.");
-    return { ok: true };
-  });
-
-// Reordena footnotes (útil quando o professor move/insere no meio)
-export const reordenarFootnotes = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z.object({
-      correcaoId: z.string().uuid(),
-      idsEmOrdem: z.array(z.string().uuid()),
-    }).parse(input)
-  )
-  .handler(async ({ data, context }) => {
-    const updates = data.idsEmOrdem.map((id, idx) =>
-      context.supabase
-        .from("anotacoes_correcao")
-        .update({ ordem: idx, updated_at: new Date().toISOString() })
-        .eq("id", id)
-        .eq("professor_id", context.userId)
-    );
-    await Promise.all(updates);
-    return { ok: true };
-  });
