@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarClock,
@@ -46,24 +46,25 @@ export const Route = createFileRoute("/_authenticated/painel")({
 });
 
 function Painel() {
-  const { user, perfil } = useAuth();
+  const { user, perfil, isProfessor } = useAuth();
 
   const { data } = useQuery({
     queryKey: ["painel", user?.id],
-    enabled: !!user,
+    enabled: !!user && !isProfessor,
     queryFn: async () => {
+      if (!user) throw new Error("Sessão não encontrada");
       const [redacoes, gam, trofeus, eventos] = await Promise.all([
         supabase
           .from("redacoes")
           .select("id, tema_titulo, created_at, tipo, correcoes(nota_total, nota_c1, nota_c2, nota_c3, nota_c4, nota_c5, liberada)")
-          .eq("aluno_id", user!.id)
+          .eq("aluno_id", user.id)
           .order("created_at", { ascending: true }),
         supabase
           .from("perfil_gamificacao")
           .select("nivel, xp_atual, cash_atual, sequencia_quinzenas")
-          .eq("aluno_id", user!.id)
+          .eq("aluno_id", user.id)
           .maybeSingle(),
-        supabase.from("trofeus_aluno").select("trofeu_codigo").eq("aluno_id", user!.id),
+        supabase.from("trofeus_aluno").select("trofeu_codigo").eq("aluno_id", user.id),
         supabase
           .from("eventos")
           .select("id, titulo, tema_titulo, inicia_em, bonus_cash")
@@ -103,7 +104,7 @@ function Painel() {
 
   const emRevisao = (data?.redacoes ?? []).filter((r) => {
     const c = Array.isArray(r.correcoes) ? r.correcoes[0] : r.correcoes;
-    return c && !c.liberada;
+    return !c || !c.liberada;
   }).length;
 
   const ultima = corrigidas.at(-1);
@@ -120,6 +121,8 @@ function Painel() {
     nome: `#${i + 1}`,
     nota: r.nota,
   }));
+
+  if (isProfessor) return <Navigate to="/professor" replace />;
 
   return (
     <AppShell
