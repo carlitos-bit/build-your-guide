@@ -53,7 +53,7 @@ export function AppShell({
         </Link>
 
         <nav className="flex flex-1 flex-col gap-1">
-          {itensAluno.map(({ to, label, icon: Icon }) => (
+          {(isProfessor ? [] : itensAluno).map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -103,7 +103,7 @@ export function AppShell({
         </nav>
 
         <div className="mt-4 rounded-xl bg-sidebar-accent p-3">
-          <StudentAvatar value={perfil?.avatar} portrait className="mb-2 size-11 rounded-full bg-secondary" />
+          {!isProfessor && <StudentAvatar value={perfil?.avatar} portrait className="mb-2 size-11 rounded-full bg-secondary" />}
           <p className="truncate text-sm font-semibold">{perfil?.nome ?? "Aluno"}</p>
           <p className="truncate text-xs text-sidebar-foreground/60">
             {isAdmin ? "Administrador" : isProfessor ? "Professor" : "Aluno"}
@@ -125,16 +125,16 @@ export function AppShell({
             <h1 className="font-display text-xl font-semibold">{titulo}</h1>
             {descricao && <p className="text-sm text-muted-foreground">{descricao}</p>}
           </div>
-          <div className="flex items-center gap-2"><Button asChild size="sm">
+          <div className="flex items-center gap-2">{!isProfessor && <Button asChild size="sm">
             <Link to="/nova-redacao">
               <PenLine className="size-4" /> Escrever
             </Link>
-          </Button>
+          </Button>}
           <AccountMenu /></div>
         </header>
 
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 lg:hidden">
-          {itensAluno.map(({ to, label }) => (
+          {(isProfessor ? [] : itensAluno).map(({ to, label }) => (
             <Link
               key={to}
               to={to}

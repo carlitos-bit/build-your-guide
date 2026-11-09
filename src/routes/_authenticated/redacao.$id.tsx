@@ -75,6 +75,8 @@ function Resultado() {
         </div>
       )}
 
+      {data && <section className="mb-6 border-b border-border py-5"><h2 className="mb-3 font-semibold">Sua redação</h2><p className="whitespace-pre-wrap text-sm leading-loose">{data.texto}</p></section>}
+
       {correcao && (
         <div className="space-y-4">
           {!correcao.liberada && (
