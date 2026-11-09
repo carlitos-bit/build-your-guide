@@ -59,9 +59,11 @@ function PainelProfessor() {
     queryKey: ["professor-turmas", user?.id],
     enabled: isProfessor || isAdmin,
     queryFn: async () => {
-      const { data, error } = await supabase.from("turmas").select("id, nome, escola, profiles(id, nome)").order("nome");
+      const { data, error } = await supabase.from("turmas").select("id, nome, escola").order("nome");
       if (error) throw error;
-      return data ?? [];
+      const alunos = await supabase.from("profiles").select("id, nome, turma_id");
+      if (alunos.error) throw alunos.error;
+      return (data ?? []).map((turma) => ({ ...turma, profiles: (alunos.data ?? []).filter((aluno) => aluno.turma_id === turma.id) }));
     },
   });
 
