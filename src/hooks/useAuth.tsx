@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     session,
     perfil,
-    isProfessor: papeis.includes("professor") || perfil?.perfil === "professor",
+    isProfessor: papeis.includes("professor"),
     isAdmin: papeis.includes("admin"),
     loading,
     sair: async () => {

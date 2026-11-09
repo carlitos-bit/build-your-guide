@@ -22,6 +22,13 @@
       "when": 1793812039559,
       "tag": "0002_correcoes_update_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794244449928,
+      "tag": "0003_isolar_turmas_e_proteger_recompensas",
+      "breakpoints": true
     }
   ]
 }

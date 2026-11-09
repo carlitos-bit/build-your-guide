@@ -184,7 +184,7 @@ export const enviarRedacao = createServerFn({ method: "POST" })
       trechos: correcao.trechos,
     };
 
-    const { error: erroCorrecao } = await supabase.rpc("registrar_correcao_ia", {
+    const { error: erroCorrecao } = await (await import("@/integrations/supabase/client.server")).supabaseAdmin.rpc("registrar_correcao_ia", {
       _redacao_id: redacao.id,
       _c1: notas.c1,
       _c2: notas.c2,
@@ -196,69 +196,9 @@ export const enviarRedacao = createServerFn({ method: "POST" })
 
     if (erroCorrecao) throw new Error("Não foi possível salvar a correção.");
 
-    // Gamificação: CASH, XP, nível e troféus
-    const cashGanho = Math.round(notaTotal * 0.14);
-    const xpGanho = Math.round(notaTotal * 0.3) + (data.tipo === "cronometrada" ? 50 : 0);
+    // Pending AI scores never cross the student-facing RPC boundary.
+    return { redacaoId: redacao.id, status: "em_revisao" as const };
 
-    const { data: gam } = await supabase
-      .from("perfil_gamificacao")
-      .select("id, nivel, xp_atual, cash_atual, sequencia_quinzenas")
-      .eq("aluno_id", alunoId)
-      .maybeSingle();
-
-    const xpTotal = (gam?.xp_atual ?? 0) + xpGanho;
-    const nivel = Math.max(1, Math.floor(xpTotal / 500) + 1);
-
-    if (gam) {
-      await supabase
-        .from("perfil_gamificacao")
-        .update({
-          xp_atual: xpTotal,
-          cash_atual: (gam.cash_atual ?? 0) + cashGanho,
-          nivel,
-        })
-        .eq("id", gam.id);
-    } else {
-      await supabase.from("perfil_gamificacao").insert({
-        aluno_id: alunoId,
-        xp_atual: xpTotal,
-        cash_atual: cashGanho,
-        nivel,
-      });
-    }
-
-    const { data: notasAnteriores } = await supabase
-      .from("correcoes")
-      .select("nota_total, redacoes!inner(aluno_id)")
-      .eq("redacoes.aluno_id", alunoId);
-
-    const todasNotas = (notasAnteriores ?? []).map((r) => r.nota_total as number);
-    const totalRedacoes = todasNotas.length;
-    const media = totalRedacoes ? todasNotas.reduce((a, b) => a + b, 0) / totalRedacoes : notaTotal;
-
-    const novosTrofeus: string[] = [];
-    if (totalRedacoes <= 1) novosTrofeus.push("primeira_redacao");
-    if (notaTotal >= 900) novosTrofeus.push("nota_900");
-    if (notaTotal >= 800 && notas.c3 >= 160) novosTrofeus.push("argumentador_elite");
-    if (totalRedacoes >= 10) novosTrofeus.push("persistencia");
-    if (totalRedacoes >= 3 && media > 850) novosTrofeus.push("mestre_escrita");
-
-    const trofeusConquistados: string[] = [];
-    for (const codigo of novosTrofeus) {
-      const { error } = await supabase
-        .from("trofeus_aluno")
-        .insert({ aluno_id: alunoId, trofeu_codigo: codigo });
-      if (!error) trofeusConquistados.push(codigo);
-    }
-
-    return {
-      redacaoId: redacao.id as string,
-      notaTotal,
-      cashGanho,
-      xpGanho,
-      nivel,
-      trofeusConquistados,
-    };
   });
 
 const AjustarInput = z.object({

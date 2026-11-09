@@ -30,11 +30,11 @@ export const Route = createFileRoute("/_authenticated/perfil")({
 });
 
 function PerfilAluno() {
-  const { user, perfil } = useAuth();
+  const { user, perfil, isProfessor } = useAuth();
 
   const { data } = useQuery({
     queryKey: ["perfil-gamificacao", user?.id],
-    enabled: !!user,
+    enabled: !!user && !isProfessor,
     queryFn: async () => {
       if (!user) throw new Error("Sessão não encontrada");
       const [gam, trofeus, meus, correcoes] = await Promise.all([
@@ -60,6 +60,8 @@ function PerfilAluno() {
       };
     },
   });
+
+  if (isProfessor) return <AppShell titulo="Minha conta" descricao="Professor"><div className="space-y-2"><h2 className="text-xl font-semibold">{perfil?.nome}</h2><p className="text-muted-foreground">{perfil?.email}</p></div></AppShell>;
 
   const xp = data?.gam?.xp_atual ?? 0;
   const nivel = data?.gam?.nivel ?? 1;

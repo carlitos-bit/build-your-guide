@@ -115,7 +115,7 @@ function NovaRedacao() {
         },
       });
       toast.success(
-        `Nota ${resultado.notaTotal}/1000 • +${resultado.cashGanho} CASH • +${resultado.xpGanho} XP`,
+        "Redação enviada! Aguarde a revisão e liberação do professor.",
       );
       limparRascunho(rascunhoBase);
       setTexto("");

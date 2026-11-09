@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 
 export function AccountMenu() {
-  const { user, perfil, loading, sair } = useAuth();
+  const { user, perfil, isProfessor, loading, sair } = useAuth();
   const router = useRouter();
   if (loading && !user) return <div className="size-10 animate-pulse rounded-full bg-muted" aria-label="Carregando conta" />;
   if (!user) return <Button asChild size="sm"><Link to="/auth">Entrar</Link></Button>;
   return <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button variant="ghost" className="h-12 gap-2 px-2" aria-label="Menu da minha conta">
-        <StudentAvatar value={perfil?.avatar} portrait className="size-9! rounded-full bg-secondary" />
+        {!isProfessor && <StudentAvatar value={perfil?.avatar} portrait className="size-9! rounded-full bg-secondary" />}
         <span className="hidden max-w-36 truncate sm:block">{perfil?.nome || "Minha conta"}</span>
         <ChevronDown className="size-4 text-muted-foreground" />
       </Button>

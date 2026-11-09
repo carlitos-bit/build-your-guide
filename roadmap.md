@@ -10,3 +10,5 @@
 - [ ] Após aprovação: área do professor/admin, turmas, atividades, correções, biblioteca, gamificação e relatórios.
 - [ ] Após aprovação: área do aluno, avaliações, envio, correção detalhada, evolução e conquistas.
 - [ ] Após aprovação: acabamento visual, notificações, acessibilidade e testes de regressão/acesso.
+- [ ] Ajuste solicitado: professor sem avatar, notas próprias ou gamificação; navegação centrada nas turmas e revisão dos alunos.
+- [ ] Manter prévia do texto da redação visível em todas as telas de correção, inclusive para o aluno antes da liberação da nota.

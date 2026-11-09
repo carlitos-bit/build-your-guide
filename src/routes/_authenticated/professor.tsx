@@ -44,26 +44,38 @@ type CorrecaoRow = {
   feedback_professor: string | null;
   liberada: boolean;
   redacao_id: string;
-  redacoes: { tema_titulo: string; aluno_id: string; created_at: string } | null;
+  redacoes: { tema_titulo: string; texto: string; aluno_id: string; created_at: string } | null;
 };
 
 function PainelProfessor() {
-  const { isProfessor } = useAuth();
+  const { isProfessor, isAdmin, user } = useAuth();
   const queryClient = useQueryClient();
   const salvar = useServerFn(ajustarCorrecao);
   const [editando, setEditando] = useState<string | null>(null);
   const [notas, setNotas] = useState<Record<string, number>>({});
   const [comentario, setComentario] = useState("");
 
+  const { data: turmas } = useQuery({
+    queryKey: ["professor-turmas", user?.id],
+    enabled: isProfessor || isAdmin,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("turmas").select("id, nome, escola").order("nome");
+      if (error) throw error;
+      const alunos = await supabase.from("profiles").select("id, nome, turma_id");
+      if (alunos.error) throw alunos.error;
+      return (data ?? []).map((turma) => ({ ...turma, profiles: (alunos.data ?? []).filter((aluno) => aluno.turma_id === turma.id) }));
+    },
+  });
+
   const { data, isLoading } = useQuery({
     queryKey: ["professor-correcoes"],
-    enabled: isProfessor,
+    enabled: isProfessor || isAdmin,
     queryFn: async () => {
       const [correcoes, alunos] = await Promise.all([
         supabase
           .from("correcoes")
           .select(
-            "id, redacao_id, nota_c1, nota_c2, nota_c3, nota_c4, nota_c5, nota_total, feedback_professor, liberada, redacoes(tema_titulo, aluno_id, created_at)",
+            "id, redacao_id, nota_c1, nota_c2, nota_c3, nota_c4, nota_c5, nota_total, feedback_professor, liberada, redacoes(tema_titulo, texto, aluno_id, created_at)",
           )
           .order("created_at", { ascending: false }),
         supabase.from("profiles").select("id, nome"),
@@ -103,7 +115,7 @@ function PainelProfessor() {
     onError: (e) => toast.error(e instanceof Error ? e.message : "Erro ao salvar."),
   });
 
-  if (!isProfessor) {
+  if (!isProfessor && !isAdmin) {
     return (
       <AppShell titulo="Painel do professor">
         <div className="card-soft p-8 text-center">
@@ -169,6 +181,11 @@ function PainelProfessor() {
             </span>
           </div>
         </div>
+
+        <section className="mt-4 border-y border-border py-4">
+          <h3 className="mb-2 text-sm font-semibold">Prévia da redação</h3>
+          <p className="max-h-96 overflow-y-auto whitespace-pre-wrap text-sm leading-loose">{c.redacoes?.texto}</p>
+        </section>
 
         {editando === c.id ? (
           <div className="mt-4 space-y-3">
@@ -249,6 +266,18 @@ function PainelProfessor() {
 
   return (
     <AppShell titulo="Painel do professor" descricao="Revise a IA antes de liberar ao aluno">
+      <section className="mb-8">
+        <h2 className="mb-4 font-display text-lg font-semibold">Minhas turmas</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(turmas ?? []).map((turma) => <div key={turma.id} className="rounded-lg border border-border bg-card p-5">
+            <h3 className="font-semibold">{turma.nome}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">{turma.escola || "Escola não informada"}</p>
+            <ul className="mt-4 divide-y divide-border">{turma.profiles.map((aluno) => <li key={aluno.id} className="py-2 text-sm">{aluno.nome}</li>)}</ul>
+            {turma.profiles.length === 0 && <p className="mt-3 text-sm text-muted-foreground">Nenhum aluno vinculado.</p>}
+          </div>)}
+        </div>
+        {turmas?.length === 0 && <p className="text-sm text-muted-foreground">Nenhuma turma vinculada à sua conta.</p>}
+      </section>
       <div className="grid gap-4 md:grid-cols-3">
         <div className="card-soft p-5">
           <Users className="size-4 text-primary" />

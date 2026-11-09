@@ -81,6 +81,7 @@ export type Database = {
           nota_c4: number
           nota_c5: number
           nota_total: number
+          recompensa_processada: boolean
           redacao_id: string
           revisada_em: string | null
           revisada_por: string | null
@@ -97,6 +98,7 @@ export type Database = {
           nota_c4?: number
           nota_c5?: number
           nota_total?: number
+          recompensa_processada?: boolean
           redacao_id: string
           revisada_em?: string | null
           revisada_por?: string | null
@@ -113,6 +115,7 @@ export type Database = {
           nota_c4?: number
           nota_c5?: number
           nota_total?: number
+          recompensa_processada?: boolean
           redacao_id?: string
           revisada_em?: string | null
           revisada_por?: string | null
@@ -401,6 +404,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      pode_revisar_redacao: { Args: { _id: string }; Returns: boolean }
+      professor_do_aluno: { Args: { _aluno: string }; Returns: boolean }
       registrar_correcao_ia: {
         Args: {
           _c1: number
