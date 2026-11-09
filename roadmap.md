@@ -5,3 +5,8 @@
 - [x] Remover o bloco "Moderação prévia" das configurações da biblioteca no painel de administração.
 - [x] Consertar o envio de redação: criar a função registrar_correcao_ia e a coluna revisada_em no banco.
 - [x] Testar revisão, comentário e liberação de nota pelo painel do professor.
+- [ ] Apresentar inventário e plano da reformulação por perfil; aguardar aprovação antes de alterar o aplicativo.
+- [ ] Após aprovação: permissões e separação de perfis, preservando dados existentes.
+- [ ] Após aprovação: área do professor/admin, turmas, atividades, correções, biblioteca, gamificação e relatórios.
+- [ ] Após aprovação: área do aluno, avaliações, envio, correção detalhada, evolução e conquistas.
+- [ ] Após aprovação: acabamento visual, notificações, acessibilidade e testes de regressão/acesso.
