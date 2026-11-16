@@ -205,6 +205,8 @@ function Painel() {
         </div>
       </div>
 
+      <LinhaDeNiveis nivel={nivel} xpNoNivel={xpNoNivel} />
+
       <div className="mt-4 grid gap-4 md:grid-cols-3">
         <div className="card-soft p-6 md:col-span-2">
           <div className="flex items-center gap-2">
@@ -346,5 +348,61 @@ function Painel() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+const XP_POR_NIVEL = 500;
+
+function LinhaDeNiveis({ nivel, xpNoNivel }: { nivel: number; xpNoNivel: number }) {
+  const inicio = Math.max(1, nivel - 2);
+  const niveis = Array.from({ length: 7 }, (_, i) => inicio + i);
+  const falta = XP_POR_NIVEL - xpNoNivel;
+  return (
+    <section className="card-soft mt-4 p-6" aria-label="Trilha de níveis">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="font-display text-base font-semibold">Trilha de níveis</h2>
+          <p className="text-sm text-muted-foreground">
+            Cada nível é uma redação. Junte {XP_POR_NIVEL} XP para avançar.
+          </p>
+        </div>
+        <p className="text-sm font-semibold text-primary">Faltam {falta} XP para o nível {nivel + 1}</p>
+      </div>
+      <ol className="mt-6 flex items-start overflow-x-auto pb-2">
+        {niveis.map((n, i) => {
+          const feito = n < nivel;
+          const atual = n === nivel;
+          const pct = feito ? 100 : atual ? Math.round((xpNoNivel / XP_POR_NIVEL) * 100) : 0;
+          return (
+            <li key={n} className="flex min-w-24 flex-1 flex-col items-center">
+              <div className="flex w-full items-center">
+                <div className={i === 0 ? "h-1.5 flex-1" : "h-1.5 flex-1 rounded-full bg-border"}>
+                  {i > 0 && (feito || atual) && <div className="h-full rounded-full bg-primary" />}
+                </div>
+                <div
+                  className={
+                    "flex size-12 shrink-0 items-center justify-center rounded-full border-4 font-display text-sm font-bold " +
+                    (feito
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : atual
+                        ? "border-primary bg-xp text-foreground shadow-glow"
+                        : "border-border bg-secondary text-muted-foreground")
+                  }
+                >
+                  {feito ? <Check className="size-5" /> : n}
+                </div>
+                <div className={i === niveis.length - 1 ? "h-1.5 flex-1" : "h-1.5 flex-1 overflow-hidden rounded-full bg-border"}>
+                  {i < niveis.length - 1 && <div className="h-full bg-primary" style={{ width: `${pct}%` }} />}
+                </div>
+              </div>
+              <p className={"mt-2 text-xs font-semibold " + (atual ? "text-primary" : "text-muted-foreground")}>
+                Nível {n}
+              </p>
+              <p className="text-[11px] text-muted-foreground">Redação {n}</p>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   );
 }
