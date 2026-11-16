@@ -29,6 +29,13 @@
       "when": 1794244449928,
       "tag": "0003_isolar_turmas_e_proteger_recompensas",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794851472036,
+      "tag": "0004_restrict_configuracoes_read",
+      "breakpoints": true
     }
   ]
 }
