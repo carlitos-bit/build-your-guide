@@ -10,46 +10,6 @@ const EnviarInput = z.object({
   tempoGastoSeg: z.number().int().nonnegative().nullable(),
 });
 
-const competenciaSchema = z.object({
-  nota: z.number(),
-  analise: z.string(),
-  sugestoes: z.array(z.string()),
-});
-
-const correcaoSchema = z.object({
-  resumo: z.string(),
-  c1: competenciaSchema,
-  c2: competenciaSchema,
-  c3: competenciaSchema,
-  c4: competenciaSchema,
-  c5: competenciaSchema,
-  pontos_fortes: z.array(z.string()),
-  pontos_a_melhorar: z.array(z.string()),
-  trechos: z.array(
-    z.object({
-      trecho: z.string(),
-      comentario: z.string(),
-      sugestao_reescrita: z.string(),
-      gravidade: z.string(),
-    }),
-  ),
-});
-
-const PROMPT_SISTEMA = `Você é um corretor experiente de redações do ENEM.
-Corrija a redação dissertativo-argumentativa seguindo EXATAMENTE as 5 competências oficiais:
-C1 — domínio da norma padrão da língua escrita.
-C2 — compreensão da proposta e aplicação de repertório sociocultural produtivo.
-C3 — seleção, organização e interpretação de informações em defesa de uma tese.
-C4 — conhecimento dos mecanismos linguísticos de coesão e coerência.
-C5 — proposta de intervenção detalhada (agente, ação, meio, finalidade, detalhamento).
-
-Regras obrigatórias:
-- Cada competência recebe nota de 0 a 200, sempre múltiplo de 40 (0, 40, 80, 120, 160 ou 200).
-- Seja rigoroso e justo, como a banca oficial.
-- Em "trechos", cite entre 3 e 6 trechos LITERAIS da redação com comentário e sugestão de reescrita; gravidade deve ser "leve", "media" ou "grave".
-- Escreva tudo em português do Brasil, em tom de professor que ensina, direto e específico.
-- Nunca invente conteúdo que não está na redação.`;
-
 function arredondar40(valor: number) {
   const limitado = Math.max(0, Math.min(200, Math.round(valor)));
   return Math.round(limitado / 40) * 40;
@@ -59,95 +19,9 @@ export const enviarRedacao = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => EnviarInput.parse(input))
   .handler(async ({ data, context }) => {
-    const geminiKey = process.env["GEMINI_API_KEY"];
-    const lovableKey = process.env["LOVABLE_API_KEY"];
-    if (!geminiKey && !lovableKey) {
-      throw new Error("A correção por IA não está configurada.");
-    }
-
-    const { streamText, Output, NoObjectGeneratedError } = await import("ai");
-
-    const prompt = `TEMA PROPOSTO: ${data.temaTitulo}\n\nMODALIDADE: ${
-      data.tipo === "cronometrada" ? "simulado cronometrado" : "treino livre"
-    }\n\nREDAÇÃO DO ALUNO:\n${data.texto}`;
-
-    let correcao: z.infer<typeof correcaoSchema> | undefined;
-
-    // Provedor principal: Google Gemini. Basta configurar GEMINI_API_KEY (plano gratuito).
-    // Usa o endpoint compatível com OpenAI, então não precisamos de dependências extras.
-    if (geminiKey) {
-      try {
-        const { createOpenAICompatible } = await import("@ai-sdk/openai-compatible");
-        const gemini = createOpenAICompatible({
-          name: "gemini",
-          baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-          apiKey: geminiKey,
-        });
-        const resultado = streamText({
-          model: gemini(process.env["GEMINI_MODEL"] ?? "gemini-2.5-pro"),
-          system: PROMPT_SISTEMA,
-          output: Output.object({ schema: correcaoSchema }),
-          prompt,
-        });
-        correcao = (await resultado.output) as z.infer<typeof correcaoSchema>;
-      } catch (error) {
-        console.error("[correcao] Gemini indisponível, usando fallback:", error);
-        correcao = undefined;
-      }
-    }
-
-    // Fallback: AI Gateway da Lovable (usa os créditos do workspace).
-    if (!correcao) {
-      if (!lovableKey) {
-        throw new Error("Não conseguimos corrigir esta redação agora. Tente novamente.");
-      }
-
-      const { createLovableAiGatewayRunIdFetch } = await import("./ai-gateway.server");
-      const { createOpenAI } = await import("@ai-sdk/openai");
-
-      const runIdFetch = createLovableAiGatewayRunIdFetch();
-      const lovable = createOpenAI({
-        baseURL: "https://ai.gateway.lovable.dev/v1",
-        apiKey: lovableKey,
-        headers: { "Lovable-API-Key": lovableKey, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
-        fetch: runIdFetch.fetch,
-      });
-
-      try {
-        const resultado = streamText({
-          model: lovable.responses(process.env["LOVABLE_MODEL"] ?? "openai/gpt-6-astra"),
-          system: PROMPT_SISTEMA,
-          output: Output.object({ schema: correcaoSchema }),
-          prompt,
-          providerOptions: {
-            openai: {
-              forceReasoning: true,
-              reasoningEffort: "low",
-              store: false,
-            },
-          },
-        });
-        correcao = (await resultado.output) as z.infer<typeof correcaoSchema>;
-      } catch (error) {
-        if (NoObjectGeneratedError.isInstance(error)) {
-          throw new Error("Não conseguimos corrigir esta redação agora. Tente novamente.");
-        }
-        throw error;
-      }
-    }
-
-    if (!correcao) {
-      throw new Error("Não conseguimos corrigir esta redação agora. Tente novamente.");
-    }
-
-    const notas = {
-      c1: arredondar40(correcao.c1.nota),
-      c2: arredondar40(correcao.c2.nota),
-      c3: arredondar40(correcao.c3.nota),
-      c4: arredondar40(correcao.c4.nota),
-      c5: arredondar40(correcao.c5.nota),
-    };
-    const notaTotal = notas.c1 + notas.c2 + notas.c3 + notas.c4 + notas.c5;
+    const { gerarCorrecaoIa, montarFeedbackIa } = await import("./correcao-ia.server");
+    const correcao = await gerarCorrecaoIa(data);
+    const { notas, feedbackIa: feedbackGerado } = montarFeedbackIa(correcao);
 
     const supabase = context.supabase;
     const alunoId = context.userId;
@@ -170,19 +44,7 @@ export const enviarRedacao = createServerFn({ method: "POST" })
 
     // A correção da IA é registrada por função controlada e nasce como ESTIMATIVA
     // (liberada = false). Só o professor a torna oficial.
-    const feedbackIa = {
-      resumo: correcao.resumo,
-      competencias: {
-        c1: { ...correcao.c1, nota: notas.c1 },
-        c2: { ...correcao.c2, nota: notas.c2 },
-        c3: { ...correcao.c3, nota: notas.c3 },
-        c4: { ...correcao.c4, nota: notas.c4 },
-        c5: { ...correcao.c5, nota: notas.c5 },
-      },
-      pontos_fortes: correcao.pontos_fortes,
-      pontos_a_melhorar: correcao.pontos_a_melhorar,
-      trechos: correcao.trechos,
-    };
+    const feedbackIa = feedbackGerado;
 
     const { error: erroCorrecao } = await (await import("@/integrations/supabase/client.server")).supabaseAdmin.rpc("registrar_correcao_ia", {
       _redacao_id: redacao.id,
@@ -271,3 +133,43 @@ export const ajustarCorrecao = createServerFn({ method: "POST" })
 // não têm tabela no banco nem tela que as use. Para reativar a função, crie a
 // tabela `anotacoes_correcao` com RLS e volte a expor estes server functions.
 
+
+export const corrigirComIa = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ correcaoId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: papeis } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["professor", "admin"]);
+    if (!papeis || papeis.length === 0) {
+      throw new Error("Apenas professores ou administradores podem corrigir com IA.");
+    }
+
+    // RLS garante que o professor só enxerga correções das suas turmas.
+    const { data: atual, error } = await context.supabase
+      .from("correcoes")
+      .select("id, redacoes(tema_titulo, texto, tipo)")
+      .eq("id", data.correcaoId)
+      .maybeSingle();
+    const redacao = atual?.redacoes as { tema_titulo: string; texto: string; tipo: string } | null;
+    if (error || !atual || !redacao) throw new Error("Redação não encontrada.");
+
+    const { gerarCorrecaoIa, montarFeedbackIa } = await import("./correcao-ia.server");
+    const correcao = await gerarCorrecaoIa({
+      temaTitulo: redacao.tema_titulo,
+      texto: redacao.texto,
+      tipo: redacao.tipo,
+    });
+    const { notas, feedbackIa } = montarFeedbackIa(correcao);
+
+    const { error: erroUpd } = await context.supabase
+      .from("correcoes")
+      .update({ feedback_ia: feedbackIa })
+      .eq("id", data.correcaoId);
+    if (erroUpd) throw new Error("Não foi possível salvar a correção da IA.");
+
+    // As notas sugeridas voltam para o professor revisar antes de liberar.
+    return { notas, resumo: correcao.resumo };
+  });

@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Flame, Loader2, Users } from "lucide-react";
+import { Flame, Loader2, Users, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { ajustarCorrecao } from "@/lib/redacoes.functions";
+import { ajustarCorrecao, corrigirComIa } from "@/lib/redacoes.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -54,6 +54,23 @@ function PainelProfessor() {
   const [editando, setEditando] = useState<string | null>(null);
   const [notas, setNotas] = useState<Record<string, number>>({});
   const [comentario, setComentario] = useState("");
+  const rodarIa = useServerFn(corrigirComIa);
+  const [iaRodando, setIaRodando] = useState<string | null>(null);
+
+  async function corrigirComIaClick(c: CorrecaoRow) {
+    setIaRodando(c.id);
+    try {
+      const r = await rodarIa({ data: { correcaoId: c.id } });
+      setEditando(c.id);
+      setNotas(r.notas);
+      setComentario(c.feedback_professor ?? r.resumo);
+      toast.success("Correção da IA pronta. Revise as notas antes de liberar.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível corrigir com IA.");
+    } finally {
+      setIaRodando(null);
+    }
+  }
 
   const { data: turmas } = useQuery({
     queryKey: ["professor-turmas", user?.id],
@@ -241,6 +258,14 @@ function PainelProfessor() {
                 </Badge>
               ))}
             </div>
+            <Button
+              size="sm"
+              onClick={() => void corrigirComIaClick(c)}
+              disabled={iaRodando !== null}
+            >
+              {iaRodando === c.id ? <Loader2 className="size-4 animate-spin" /> : <Wand2 className="size-4" />}
+              {iaRodando === c.id ? "Corrigindo..." : "Corrigir com IA"}
+            </Button>
             <Button
               size="sm"
               variant="secondary"
