@@ -36,6 +36,13 @@
       "when": 1794851472036,
       "tag": "0004_restrict_configuracoes_read",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794852482081,
+      "tag": "0005_professor_vincula_aluno",
+      "breakpoints": true
     }
   ]
 }
