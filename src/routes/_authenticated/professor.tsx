@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Flame, Loader2, Users } from "lucide-react";
+import { Flame, Loader2, Users, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ajustarCorrecao, corrigirComIa } from "@/lib/redacoes.functions";
 import { useAuth } from "@/hooks/useAuth";
