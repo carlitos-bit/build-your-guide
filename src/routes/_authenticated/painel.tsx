@@ -2,6 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   CalendarClock,
+  Check,
   Coins,
   Flame,
   Sparkles,
