@@ -406,6 +406,14 @@ export type Database = {
       }
       pode_revisar_redacao: { Args: { _id: string }; Returns: boolean }
       professor_do_aluno: { Args: { _aluno: string }; Returns: boolean }
+      professor_remover_aluno: {
+        Args: { _aluno_id: string }
+        Returns: undefined
+      }
+      professor_vincular_aluno: {
+        Args: { _email: string; _turma_id: string }
+        Returns: string
+      }
       registrar_correcao_ia: {
         Args: {
           _c1: number
