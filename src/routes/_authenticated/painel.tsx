@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   CalendarClock,
   Check,
-  Check,
   Coins,
   Flame,
   Sparkles,
