@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { Input } from "@/components/ui/input";
 import { CalendarClock, Coins, Timer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
@@ -24,7 +28,52 @@ export const Route = createFileRoute("/_authenticated/eventos")({
   component: Eventos,
 });
 
+function NovoEvento() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [f, setF] = useState({ titulo: "", tema: "", inicio: "", duracao: 90, bonus: 200 });
+  const [salvando, setSalvando] = useState(false);
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!user || !f.titulo.trim() || !f.tema.trim() || !f.inicio) {
+      toast.error("Preencha título, tema e data.");
+      return;
+    }
+    setSalvando(true);
+    const { error } = await supabase.from("eventos").insert({
+      titulo: f.titulo.trim(),
+      tema_titulo: f.tema.trim(),
+      inicia_em: new Date(f.inicio).toISOString(),
+      duracao_min: f.duracao,
+      bonus_cash: f.bonus,
+      criado_por: user.id,
+    });
+    setSalvando(false);
+    if (error) {
+      toast.error("Não foi possível publicar o evento.");
+      return;
+    }
+    toast.success("Evento publicado para os alunos.");
+    setF({ titulo: "", tema: "", inicio: "", duracao: 90, bonus: 200 });
+    void qc.invalidateQueries({ queryKey: ["eventos"] });
+  }
+  return (
+    <form onSubmit={enviar} className="card-soft mb-6 grid gap-3 p-5 md:grid-cols-2">
+      <h2 className="font-display text-base font-semibold md:col-span-2">Publicar evento de redação</h2>
+      <Input placeholder="Título (ex.: Simulado ENEM de novembro)" value={f.titulo} onChange={(e) => setF({ ...f, titulo: e.target.value })} />
+      <Input placeholder="Tema da redação" value={f.tema} onChange={(e) => setF({ ...f, tema: e.target.value })} />
+      <label className="text-sm">Início<Input type="datetime-local" value={f.inicio} onChange={(e) => setF({ ...f, inicio: e.target.value })} /></label>
+      <div className="grid grid-cols-2 gap-3">
+        <label className="text-sm">Duração (min)<Input type="number" min={10} value={f.duracao} onChange={(e) => setF({ ...f, duracao: Number(e.target.value) })} /></label>
+        <label className="text-sm">Bônus CASH<Input type="number" min={0} value={f.bonus} onChange={(e) => setF({ ...f, bonus: Number(e.target.value) })} /></label>
+      </div>
+      <Button type="submit" disabled={salvando} className="md:col-span-2">Publicar evento</Button>
+    </form>
+  );
+}
+
 function Eventos() {
+  const { isProfessor, isAdmin } = useAuth();
   const { data } = useQuery({
     queryKey: ["eventos"],
     queryFn: async () => {
@@ -40,6 +89,7 @@ function Eventos() {
 
   return (
     <AppShell titulo="Eventos" descricao="Simulados cronometrados agendados">
+      {(isProfessor || isAdmin) && <NovoEvento />}
       <div className="grid gap-4 md:grid-cols-2">
         {(data ?? []).map((e) => {
           const inicio = new Date(e.inicia_em);
@@ -70,9 +120,11 @@ function Eventos() {
                 </span>
               </div>
 
-              <Button asChild className="mt-5 w-full" disabled={!futuro}>
-                <Link to="/nova-redacao">Participar no modo cronometrado</Link>
-              </Button>
+              {!isProfessor && (
+                <Button asChild className="mt-5 w-full" disabled={!futuro}>
+                  <Link to="/nova-redacao">Participar no modo cronometrado</Link>
+                </Button>
+              )}
             </div>
           );
         })}

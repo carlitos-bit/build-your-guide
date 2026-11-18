@@ -36,7 +36,7 @@ function Biblioteca() {
   const [titulo, setTitulo] = useState("");
   const [url, setUrl] = useState("");
   const [tema, setTema] = useState("");
-  const [tipo, setTipo] = useState<"video" | "slide">("video");
+  const [tipo, setTipo] = useState<"video" | "slide" | "exemplo">("video");
 
   const { data } = useQuery({
     queryKey: ["biblioteca"],
@@ -132,6 +132,15 @@ function Biblioteca() {
                 >
                   <FileText className="size-4" /> Slides
                 </Button>
+                {isProfessor && (
+                  <Button
+                    type="button"
+                    variant={tipo === "exemplo" ? "default" : "outline"}
+                    onClick={() => setTipo("exemplo")}
+                  >
+                    <FileText className="size-4" /> Redação exemplo
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -164,6 +173,7 @@ function Biblioteca() {
               <p className="mt-1 text-sm text-muted-foreground">{m.descricao}</p>
             )}
             <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              {m.tipo === "exemplo" && <Badge>Redação exemplo</Badge>}
               {m.tema && <Badge variant="secondary">{m.tema}</Badge>}
               <span>por {m.autor_nome ?? "Equipe"}</span>
               <ExternalLink className="size-3" />

@@ -25,6 +25,12 @@ const itensAluno = [
   { to: "/biblioteca", label: "Conhecimentos", icon: Library },
 ] as const;
 
+const itensProfessor = [
+  { to: "/professor", label: "Painel do professor", icon: GraduationCap },
+  { to: "/eventos", label: "Eventos", icon: CalendarClock },
+  { to: "/biblioteca", label: "Apoio e vídeos", icon: Library },
+] as const;
+
 export function AppShell({
   children,
   titulo,
@@ -53,7 +59,7 @@ export function AppShell({
         </Link>
 
         <nav className="flex flex-1 flex-col gap-1">
-          {(isProfessor ? [] : itensAluno).map(({ to, label, icon: Icon }) => (
+          {(isProfessor ? itensProfessor : itensAluno).map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
@@ -68,24 +74,6 @@ export function AppShell({
             </Link>
           ))}
 
-          {isProfessor && (
-            <>
-              <p className="mt-6 px-3 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-                Professor
-              </p>
-              <Link
-                to="/professor"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                activeProps={{
-                  className:
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold bg-sidebar-primary text-sidebar-primary-foreground",
-                }}
-              >
-                <GraduationCap className="size-4" />
-                Painel do professor
-              </Link>
-            </>
-          )}
 
           {isAdmin && (
             <Link
@@ -134,7 +122,7 @@ export function AppShell({
         </header>
 
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-card px-3 py-2 lg:hidden">
-          {(isProfessor ? [] : itensAluno).map(({ to, label }) => (
+          {(isProfessor ? itensProfessor : itensAluno).map(({ to, label }) => (
             <Link
               key={to}
               to={to}
@@ -147,18 +135,6 @@ export function AppShell({
               {label}
             </Link>
           ))}
-          {isProfessor && (
-            <Link
-              to="/professor"
-              className="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-muted-foreground"
-              activeProps={{
-                className:
-                  "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold bg-primary text-primary-foreground",
-              }}
-            >
-              Professor
-            </Link>
-          )}
           {isAdmin && (
             <Link
               to="/admin"

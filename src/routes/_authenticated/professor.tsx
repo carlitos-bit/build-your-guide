@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Flame, Loader2, Users, Wand2 } from "lucide-react";
+import { Flame, Loader2, Send, Users, Wand2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ajustarCorrecao, corrigirComIa } from "@/lib/redacoes.functions";
 import { useAuth } from "@/hooks/useAuth";
@@ -128,7 +128,7 @@ function PainelProfessor() {
     onSuccess: (_r, args) => {
       toast.success(
         args.liberada
-          ? "Correção revisada e liberada ao aluno."
+          ? "Redação corrigida enviada ao aluno."
           : "Correção salva (ainda em revisão).",
       );
       setEditando(null);
@@ -241,8 +241,8 @@ function PainelProfessor() {
                 onClick={() => mutation.mutate({ correcaoId: c.id, liberada: true })}
                 disabled={mutation.isPending}
               >
-                {mutation.isPending && <Loader2 className="size-4 animate-spin" />} Salvar e
-                liberar
+                {mutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Enviar
+                redação corrigida ao aluno
               </Button>
               <Button
                 variant="secondary"
