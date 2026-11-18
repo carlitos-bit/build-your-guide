@@ -43,6 +43,13 @@
       "when": 1794852482081,
       "tag": "0005_professor_vincula_aluno",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795014870217,
+      "tag": "0006_leitura_requer_login",
+      "breakpoints": true
     }
   ]
 }
