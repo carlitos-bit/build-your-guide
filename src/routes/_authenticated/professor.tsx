@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { COMPETENCIAS, corDaNota } from "@/lib/notas";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { GerenciarTurmas } from "@/components/GerenciarTurmas";
 
 export const Route = createFileRoute("/_authenticated/professor")({
   head: () => ({
@@ -88,18 +90,21 @@ function PainelProfessor() {
     queryKey: ["professor-correcoes"],
     enabled: isProfessor || isAdmin,
     queryFn: async () => {
-      const [correcoes, alunos] = await Promise.all([
+      const [correcoes, alunos, turmasRes] = await Promise.all([
         supabase
           .from("correcoes")
           .select(
             "id, redacao_id, nota_c1, nota_c2, nota_c3, nota_c4, nota_c5, nota_total, feedback_professor, liberada, redacoes(tema_titulo, texto, aluno_id, created_at)",
           )
           .order("created_at", { ascending: false }),
-        supabase.from("profiles").select("id, nome"),
+        supabase.from("profiles").select("id, nome, turma_id"),
+        supabase.from("turmas").select("id, nome"),
       ]);
+      const nomesTurmas = new Map((turmasRes.data ?? []).map((t) => [t.id as string, t.nome as string]));
       return {
         correcoes: (correcoes.data ?? []) as unknown as CorrecaoRow[],
         alunos: new Map((alunos.data ?? []).map((a) => [a.id as string, a.nome as string])),
+        turmaDoAluno: new Map((alunos.data ?? []).map((a) => [a.id as string, a.turma_id ? nomesTurmas.get(a.turma_id) ?? "Turma" : "Sem turma"])),
       };
     },
   });
@@ -182,8 +187,11 @@ function PainelProfessor() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate font-semibold">{c.redacoes?.tema_titulo}</p>
+            <p className="mt-1 text-sm">
+              <span className="font-semibold">{data?.alunos.get(c.redacoes?.aluno_id ?? "") ?? "Aluno"}</span>
+              <Badge variant="outline" className="ml-2">{data?.turmaDoAluno.get(c.redacoes?.aluno_id ?? "") ?? "Sem turma"}</Badge>
+            </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {data?.alunos.get(c.redacoes?.aluno_id ?? "") ?? "Aluno"} •{" "}
               {c.redacoes?.created_at
                 ? new Date(c.redacoes.created_at).toLocaleDateString("pt-BR")
                 : ""}
@@ -291,6 +299,13 @@ function PainelProfessor() {
 
   return (
     <AppShell titulo="Painel do professor" descricao="Revise a IA antes de liberar ao aluno">
+      <Tabs defaultValue="revisao">
+      <TabsList className="mb-6">
+        <TabsTrigger value="revisao">Revisão</TabsTrigger>
+        <TabsTrigger value="cadastro">Cadastrar alunos e turmas</TabsTrigger>
+      </TabsList>
+      <TabsContent value="cadastro"><GerenciarTurmas turmas={turmas ?? []} /></TabsContent>
+      <TabsContent value="revisao">
       <section className="mb-8">
         <h2 className="mb-4 font-display text-lg font-semibold">Minhas turmas</h2>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -406,6 +421,8 @@ function PainelProfessor() {
         <p className="mt-2 text-sm text-muted-foreground">Nenhuma correção revisada ainda.</p>
       )}
       <div className="mt-3 space-y-3">{revisadas.map((c) => cardCorrecao(c))}</div>
+      </TabsContent>
+      </Tabs>
     </AppShell>
   );
 }
