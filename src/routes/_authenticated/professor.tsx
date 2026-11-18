@@ -179,6 +179,24 @@ function PainelProfessor() {
       media: Math.round(ord.reduce((a, b) => a + b.nota, 0) / ord.length),
     };
   });
+  const mapaAlunos = (() => {
+    const acc = new Map<string, number[][]>();
+    for (const c of revisadas) {
+      const id = c.redacoes?.aluno_id;
+      if (!id) continue;
+      const l = acc.get(id) ?? [];
+      l.push([c.nota_c1, c.nota_c2, c.nota_c3, c.nota_c4, c.nota_c5].map(Number));
+      acc.set(id, l);
+    }
+    return [...acc.entries()]
+      .map(([id, l]) => ({
+        id,
+        nome: data?.alunos.get(id) ?? "Aluno",
+        turma: data?.turmaDoAluno.get(id) ?? "Sem turma",
+        medias: [0, 1, 2, 3, 4].map((i) => Math.round(l.reduce((a, n) => a + (n[i] ?? 0), 0) / l.length)),
+      }))
+      .sort((a, b) => a.turma.localeCompare(b.turma) || a.nome.localeCompare(b.nome));
+  })();
   const maisFraca = [...mediaPorComp].sort((a, b) => a.media - b.media)[0];
 
   function cardCorrecao(c: CorrecaoRow) {
@@ -361,6 +379,52 @@ function PainelProfessor() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="mt-4 card-soft p-5">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="font-display text-base font-semibold">Mapa de calor por aluno</h2>
+            <p className="text-sm text-muted-foreground">Média de cada competência nas correções enviadas. Quanto mais forte a cor, melhor o desempenho.</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            0
+            <span className="h-2 w-24 rounded-full" style={{ background: "linear-gradient(90deg, color-mix(in oklch, var(--danger) 35%, var(--card)), color-mix(in oklch, var(--warning) 45%, var(--card)), color-mix(in oklch, var(--success) 55%, var(--card)))" }} />
+            200
+          </div>
+        </div>
+        {mapaAlunos.length === 0 ? (
+          <p className="mt-3 text-sm text-muted-foreground">O mapa aparece depois que você enviar correções aos alunos.</p>
+        ) : (
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[560px] border-separate border-spacing-1 text-sm">
+              <thead>
+                <tr className="text-xs uppercase text-muted-foreground">
+                  <th className="text-left font-semibold">Aluno</th>
+                  {COMPETENCIAS.map((c) => <th key={c.chave} title={c.titulo} className="font-semibold">{c.chave}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {mapaAlunos.map((a) => (
+                  <tr key={a.id}>
+                    <td className="pr-3">
+                      <p className="font-medium">{a.nome}</p>
+                      <p className="text-xs text-muted-foreground">{a.turma}</p>
+                    </td>
+                    {a.medias.map((m, i) => {
+                      const cor = m >= 160 ? "var(--success)" : m >= 120 ? "var(--warning)" : "var(--danger)";
+                      return (
+                        <td key={i} title={`${COMPETENCIAS[i]?.titulo}: ${m}/200`} className="rounded-md py-2 text-center font-semibold" style={{ backgroundColor: `color-mix(in oklch, ${cor} ${25 + Math.round((m / 200) * 35)}%, var(--card))` }}>
+                          {m}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 card-soft p-5">
