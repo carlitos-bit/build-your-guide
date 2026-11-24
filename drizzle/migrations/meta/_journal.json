@@ -50,6 +50,27 @@
       "when": 1795014870217,
       "tag": "0006_leitura_requer_login",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1795564043317,
+      "tag": "0007_eventos_materiais_loja",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795564070712,
+      "tag": "0008_arquivos_storage_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795564135362,
+      "tag": "0009_perfil_tema",
+      "breakpoints": true
     }
   ]
 }

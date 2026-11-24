@@ -16,37 +16,49 @@ export type Database = {
     Tables: {
       biblioteca: {
         Row: {
+          arquivo_nome: string | null
+          arquivo_path: string | null
           autor_id: string | null
           autor_nome: string | null
+          categoria: string | null
           created_at: string
           descricao: string | null
           id: string
           tema: string | null
           tipo: string
           titulo: string
-          url: string
+          turma_id: string | null
+          url: string | null
         }
         Insert: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
           autor_id?: string | null
           autor_nome?: string | null
+          categoria?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
           tema?: string | null
           tipo?: string
           titulo: string
-          url: string
+          turma_id?: string | null
+          url?: string | null
         }
         Update: {
+          arquivo_nome?: string | null
+          arquivo_path?: string | null
           autor_id?: string | null
           autor_nome?: string | null
+          categoria?: string | null
           created_at?: string
           descricao?: string | null
           id?: string
           tema?: string | null
           tipo?: string
           titulo?: string
-          url?: string
+          turma_id?: string | null
+          url?: string | null
         }
         Relationships: []
       }
@@ -130,14 +142,49 @@ export type Database = {
           },
         ]
       }
+      evento_inscricoes: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          evento_id: string
+          id: string
+          status: string
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          evento_id: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          evento_id?: string
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evento_inscricoes_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       eventos: {
         Row: {
           bonus_cash: number
           created_at: string
           criado_por: string | null
+          descricao: string | null
           duracao_min: number
           id: string
+          imagem_path: string | null
           inicia_em: string
+          local: string | null
           tema_titulo: string
           titulo: string
         }
@@ -145,9 +192,12 @@ export type Database = {
           bonus_cash?: number
           created_at?: string
           criado_por?: string | null
+          descricao?: string | null
           duracao_min?: number
           id?: string
+          imagem_path?: string | null
           inicia_em: string
+          local?: string | null
           tema_titulo: string
           titulo: string
         }
@@ -155,11 +205,97 @@ export type Database = {
           bonus_cash?: number
           created_at?: string
           criado_por?: string | null
+          descricao?: string | null
           duracao_min?: number
           id?: string
+          imagem_path?: string | null
           inicia_em?: string
+          local?: string | null
           tema_titulo?: string
           titulo?: string
+        }
+        Relationships: []
+      }
+      loja_compras: {
+        Row: {
+          aluno_id: string
+          created_at: string
+          id: string
+          preco_unitario: number
+          produto_id: string | null
+          produto_nome: string
+          quantidade: number
+          status: string
+          total: number
+        }
+        Insert: {
+          aluno_id: string
+          created_at?: string
+          id?: string
+          preco_unitario: number
+          produto_id?: string | null
+          produto_nome: string
+          quantidade: number
+          status?: string
+          total: number
+        }
+        Update: {
+          aluno_id?: string
+          created_at?: string
+          id?: string
+          preco_unitario?: number
+          produto_id?: string | null
+          produto_nome?: string
+          quantidade?: number
+          status?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loja_compras_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "loja_produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loja_produtos: {
+        Row: {
+          ativo: boolean
+          categoria: string | null
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          estoque: number
+          id: string
+          imagem_path: string | null
+          nome: string
+          preco: number
+        }
+        Insert: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          estoque?: number
+          id?: string
+          imagem_path?: string | null
+          nome: string
+          preco: number
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string | null
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          estoque?: number
+          id?: string
+          imagem_path?: string | null
+          nome?: string
+          preco?: number
         }
         Relationships: []
       }
@@ -201,6 +337,7 @@ export type Database = {
           id: string
           nome: string
           perfil: string
+          tema: Json
           turma_id: string | null
         }
         Insert: {
@@ -210,6 +347,7 @@ export type Database = {
           id: string
           nome?: string
           perfil?: string
+          tema?: Json
           turma_id?: string | null
         }
         Update: {
@@ -219,6 +357,7 @@ export type Database = {
           id?: string
           nome?: string
           perfil?: string
+          tema?: Json
           turma_id?: string | null
         }
         Relationships: []
@@ -396,6 +535,10 @@ export type Database = {
           _user_id: string
         }
         Returns: undefined
+      }
+      comprar_produto: {
+        Args: { _produto_id: string; _quantidade: number }
+        Returns: string
       }
       has_role: {
         Args: {

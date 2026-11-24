@@ -11,4 +11,8 @@
 - [ ] Após aprovação: área do aluno, avaliações, envio, correção detalhada, evolução e conquistas.
 - [ ] Após aprovação: acabamento visual, notificações, acessibilidade e testes de regressão/acesso.
 - [ ] Ajuste solicitado: professor sem avatar, notas próprias ou gamificação; navegação centrada nas turmas e revisão dos alunos.
-- [ ] Manter prévia do texto da redação visível em todas as telas de correção, inclusive para o aluno antes da liberação da nota.
+- [ ] Manter prévia do texto da redação visível em todas as telas de correção, inclusive para o aluno antes da liberação da nota.- [ ] Eventos: professor cria/edita/exclui com descrição, local, imagem e gerencia inscritos; aluno se inscreve.
+- [ ] Materiais: só professor publica; anexos (PDF, Word, PPT, imagens), categoria, turma, trocar/remover.
+- [ ] Loja de CASH: produtos com estoque, compra segura, histórico do aluno e do professor, recompensas iniciais por categoria.
+- [ ] Perfil: 5+ temas visuais com prévia e salvamento individual.
+- [ ] Trilha de aprendizagem estilo jogo.

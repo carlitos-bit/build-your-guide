@@ -1,0 +1,4 @@
+CREATE POLICY arquivos_le ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'arquivos');
+CREATE POLICY arquivos_envia ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'arquivos' AND (public.has_role(auth.uid(),'professor') OR public.has_role(auth.uid(),'admin')));
+CREATE POLICY arquivos_troca ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'arquivos' AND (public.has_role(auth.uid(),'professor') OR public.has_role(auth.uid(),'admin')));
+CREATE POLICY arquivos_remove ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'arquivos' AND (public.has_role(auth.uid(),'professor') OR public.has_role(auth.uid(),'admin')));
