@@ -10,6 +10,7 @@ type PerfilRow = {
   email: string | null;
   perfil: string;
   avatar: unknown;
+  tema: unknown;
 };
 
 type AuthContextValue = {
@@ -44,7 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function carregarPerfil(userId: string) {
     const { data } = await supabase
       .from("profiles")
-      .select("id, nome, email, perfil, avatar")
+      .select("id, nome, email, perfil, avatar, tema")
       .eq("id", userId)
       .maybeSingle();
     setPerfil((data as PerfilRow | null) ?? null);

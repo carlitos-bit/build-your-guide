@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { AvatarEditor } from "@/components/AvatarEditor";
 import { StudentAvatar } from "@/components/StudentAvatar";
+import { TemaEditor } from "@/components/TemaEditor";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/perfil")({
   head: () => ({
@@ -107,6 +109,8 @@ function PerfilAluno() {
         </div>
       </div>
 
+      <TemaEditor />
+
       <AvatarEditor />
 
       <div className="mt-4 card-soft p-6">
@@ -141,12 +145,13 @@ function PerfilAluno() {
       <div className="mt-4 card-soft p-6">
         <h2 className="font-display text-base font-semibold">Loja EscreveAI</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Use seu CASH para resgatar prêmios cadastrados pelo professor. Em breve.
+          Use seu CASH para resgatar prêmios cadastrados pelo professor.
         </p>
         <p className="mt-3 text-sm">
           Você já acumulou <span className="font-semibold text-cash">{data?.gam?.cash_atual ?? 0} CASH</span>{" "}
           em {data?.total ?? 0} redações.
         </p>
+        <Link to="/loja" className="mt-3 inline-block text-sm font-semibold text-primary hover:underline">Abrir a Loja de CASH →</Link>
       </div>
     </AppShell>
   );

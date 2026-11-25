@@ -226,3 +226,31 @@
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
+
+/* Temas do perfil do aluno (aplicados só na área do próprio aluno) */
+[data-tema]:not([data-tema="padrao"]) {
+  --primary: var(--tema-cor);
+  --ring: var(--tema-cor);
+  --sidebar-primary: var(--tema-cor);
+}
+[data-tema="herois"] { --sidebar: oklch(0.42 0.2 265); --accent: oklch(0.9 0.15 95); --radius: 0.4rem; }
+[data-tema="herois"].dark { --background: oklch(0.18 0.05 265); --card: oklch(0.23 0.06 265); --accent: oklch(0.35 0.1 265); }
+[data-tema="herois"][data-fundo="0"] { background-image: radial-gradient(color-mix(in oklab, var(--tema-cor) 25%, transparent) 1.5px, transparent 1.5px); background-size: 14px 14px; }
+[data-tema="herois"][data-fundo="1"] { background-image: repeating-conic-gradient(from 0deg at 80% 0%, color-mix(in oklab, var(--tema-cor) 12%, transparent) 0 8deg, transparent 8deg 16deg); }
+[data-tema="galaxia"] { --background: oklch(0.16 0.06 290); --card: oklch(0.22 0.07 285); --muted: oklch(0.27 0.06 285); --accent: oklch(0.32 0.09 285); --border: oklch(1 0 0 / 14%); --sidebar: oklch(0.13 0.05 285); }
+[data-tema="galaxia"][data-fundo="0"] { background-image: radial-gradient(1px 1px at 20% 30%, oklch(1 0 0 / 80%), transparent), radial-gradient(1.5px 1.5px at 70% 60%, oklch(1 0 0 / 70%), transparent), radial-gradient(1px 1px at 40% 80%, oklch(1 0 0 / 60%), transparent), radial-gradient(1px 1px at 90% 15%, oklch(1 0 0 / 70%), transparent); background-size: 220px 220px; }
+[data-tema="galaxia"][data-fundo="1"] { background-image: radial-gradient(ellipse at 20% 20%, oklch(0.45 0.2 300 / 45%), transparent 50%), radial-gradient(ellipse at 80% 70%, oklch(0.5 0.15 230 / 40%), transparent 55%); background-attachment: fixed; }
+[data-tema="neon"] { --background: oklch(0.14 0.02 260); --card: oklch(0.19 0.03 260); --muted: oklch(0.24 0.03 260); --accent: oklch(0.28 0.04 260); --border: color-mix(in oklab, var(--tema-cor) 35%, transparent); --sidebar: oklch(0.11 0.02 260); }
+[data-tema="neon"] .card-soft { box-shadow: 0 0 18px -6px var(--tema-cor); }
+[data-tema="neon"][data-fundo="0"] { background-image: linear-gradient(color-mix(in oklab, var(--tema-cor) 10%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab, var(--tema-cor) 10%, transparent) 1px, transparent 1px); background-size: 32px 32px; }
+[data-tema="neon"][data-fundo="1"] { background-image: radial-gradient(circle at 50% -10%, color-mix(in oklab, var(--tema-cor) 35%, transparent), transparent 60%); background-attachment: fixed; }
+[data-tema="minimalista"] { --background: oklch(0.995 0 0); --card: oklch(1 0 0); --sidebar: oklch(0.97 0 0); --sidebar-foreground: oklch(0.25 0 0); --sidebar-accent: oklch(0.92 0 0); --sidebar-accent-foreground: oklch(0.2 0 0); --sidebar-border: oklch(0.9 0 0); --accent: oklch(0.95 0 0); }
+[data-tema="minimalista"][data-fundo="1"] { background-image: repeating-linear-gradient(0deg, oklch(0 0 0 / 4%) 0 1px, transparent 1px 28px); }
+[data-tema="dark"] { --background: oklch(0.15 0.005 260); --card: oklch(0.2 0.005 260); --muted: oklch(0.25 0.005 260); --accent: oklch(0.28 0.01 260); --sidebar: oklch(0.12 0.005 260); }
+[data-tema="dark"][data-fundo="1"] { background-image: linear-gradient(160deg, color-mix(in oklab, var(--tema-cor) 18%, transparent), transparent 45%); background-attachment: fixed; }
+[data-tema] { background-color: var(--background); color: var(--foreground); }
+
+@keyframes trilha-pulso { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes trilha-entra { from { opacity: 0; transform: translateY(12px) scale(.9); } to { opacity: 1; transform: none; } }
+@utility animate-trilha-pulso { animation: trilha-pulso 1.8s ease-in-out infinite; }
+@utility animate-trilha-entra { animation: trilha-entra .5s ease-out both; }

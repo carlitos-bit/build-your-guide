@@ -8,6 +8,7 @@ import {
   LogOut,
   PenLine,
   ShieldCheck,
+  ShoppingBag,
   Trophy,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -15,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { AccountMenu } from "@/components/AccountMenu";
 import { StudentAvatar } from "@/components/StudentAvatar";
+import { atributosTema, normalizarTema } from "@/lib/temas";
 
 const itensAluno = [
   { to: "/painel", label: "Painel", icon: LayoutDashboard },
@@ -23,12 +25,14 @@ const itensAluno = [
   { to: "/perfil", label: "Meu perfil", icon: Trophy },
   { to: "/eventos", label: "Eventos", icon: CalendarClock },
   { to: "/biblioteca", label: "Conhecimentos", icon: Library },
+  { to: "/loja", label: "Loja de CASH", icon: ShoppingBag },
 ] as const;
 
 const itensProfessor = [
   { to: "/professor", label: "Painel do professor", icon: GraduationCap },
   { to: "/eventos", label: "Eventos", icon: CalendarClock },
-  { to: "/biblioteca", label: "Apoio e vídeos", icon: Library },
+  { to: "/biblioteca", label: "Materiais", icon: Library },
+  { to: "/loja", label: "Loja de CASH", icon: ShoppingBag },
 ] as const;
 
 export function AppShell({
@@ -49,7 +53,10 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      {...(isProfessor ? {} : atributosTema(normalizarTema(perfil?.tema)))}
+      className={`min-h-screen bg-background ${isProfessor ? "" : atributosTema(normalizarTema(perfil?.tema)).className}`}
+    >
       <aside className="fixed inset-y-0 left-0 hidden w-64 flex-col bg-sidebar px-4 py-6 text-sidebar-foreground lg:flex">
         <Link to="/" className="mb-8 flex items-center gap-2 px-2">
           <span className="grid size-9 place-items-center rounded-xl bg-brand font-display text-lg font-bold text-primary-foreground">
